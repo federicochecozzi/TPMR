@@ -32,13 +32,17 @@ ExtendedOrderQtyPerMonth(Subcat,[Year],[Month],MonthNumber,OrderQty) AS (
 	SELECT ft.Subcat,ft.[Year],ft.[Month], ft.MonthNumber, ISNULL(oqpm.OrderQty,0) AS OrderQty
 	FROM FactorTable ft LEFT JOIN OrderQtyPerMonth oqpm ON 
 	ft.Subcat = oqpm.Subcat AND ft.[Year] = oqpm.[Year] AND ft.[Month] = oqpm.[Month] 
+),
+SumOrderQtyPerMonth(Subcat,[Year],[Month],MonthNumber,OrderQty,sumx,sumy,sumxx,sumxy) AS (
+	SELECT Subcat,[Year],[Month],MonthNumber,OrderQty, 
+		   SUM(MonthNumber) OVER(PARTITION BY Subcat ORDER BY MonthNumber ROWS BETWEEN 2 PRECEDING AND CURRENT ROW),
+		   SUM(OrderQty) OVER(PARTITION BY Subcat ORDER BY MonthNumber ROWS BETWEEN 2 PRECEDING AND CURRENT ROW),
+		   SUM(MonthNumber*MonthNumber) OVER(PARTITION BY Subcat ORDER BY MonthNumber ROWS BETWEEN 2 PRECEDING AND CURRENT ROW),
+		   SUM(OrderQty*MonthNumber) OVER(PARTITION BY Subcat ORDER BY MonthNumber ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)
+	FROM ExtendedOrderQtyPerMonth
 )
-SumsOrderQtyPerMonth(Subcat,[Year],[Month],MonthNumber,sumx,sumy,sumxx,sumxy) AS (
-	SELECT DISTINCT 
-	FROM 
-)
-SELECT *
-FROM ExtendedOrderQtyPerMonth
+SELECT Subcat,[Year],[Month],MonthNumber,OrderQty,(3*sumxy-sumx*sumy)/(3*sumxx-sumx*sumx) AS ThreeMonthTendency
+FROM SumOrderQtyPerMonth
 
 --SELECT dd.CalendarYear, dd.MonthNumberOfYear, fis.OrderDate, dp.ProductSubcategoryKey,
 --REGR_SLOPE(fis.OrderQuantity,dd.MonthNumberOfYear) OVER(PARTITION dp.ProductSubcategoryKey ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS ThreeMonthTrendOrderQty 
