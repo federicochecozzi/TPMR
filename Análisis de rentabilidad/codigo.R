@@ -11,12 +11,13 @@ on <- dbConnect(odbc(),
 
 query1 <- 'select top 5 s.productkey,s.salesterritorykey,s.salesamount, s.standardproductcost,s.totalproductcost, s.salesamount - s.totalproductcost as totalincome  
             from FactInternetSales s'
-query2 <- 'select top 5 s.*, p.standardcost, p.listprice from FactResellerSales s 
-          left join DimProduct p
-          on s.productkey = p.productkey
-          where s.discountamount <> 0 and
-          s.productkey = 346
-          order by orderdatekey'
+query2 <- "SELECT cast(left(OrderDateKey,6) as integer) AS anio_mes
+                              ,salesamount
+                              ,OrderQuantity
+                              ,totalProductCost
+                              ,'reseller (mayorista)' AS canal
+                              ,CAST(salesamount as float) - CAST(totalProductCost as float) as gananciaTotal
+                      FROM FactInternetSales s"
 
 query3 <- 'select top 5 * from DimDate'
 
@@ -25,49 +26,88 @@ prueba3 <- dbGetQuery(conn = on,query3)
 
 ### Márgenes de rentabilidad mensual
 
+
+
 q_total_ganancia_mes <- "
+
+                      WITH 
+	ventas_reseller(anio_mes,salesamount,OrderQuantity,totalProductCost,
+                                            canal, gananciaTotal) AS
+                      (SELECT 
+                            cast(left(OrderDateKey,6) as integer) as anio_mes
+                            ,salesamount
+                            ,OrderQuantity
+                            ,totalProductCost
+                            ,'online (mayorista)' as canal
+                            ,cast(salesamount as float) - cast(totalProductCost as float) as gananciaTotal
                       
-                      with ventas_online(OrderDateKey,CalendarYear,SpanishMonthName,MonthNumberofYear,salesamount,OrderQuantity,totalProductCost,
-                                            canal, gananciaTotal)
-                      as
-                      (select OrderDateKey,CalendarYear,SpanishMonthName,MonthNumberofYear,salesamount,OrderQuantity,totalProductCost,
-                      'online (minorista)' as canal,
-                      cast(salesamount as float) - cast(totalProductCost as float) as gananciaTotal
+      				   FROM FactResellerSales s
+                      ),
                       
-                      from FactResellerSales s
-                      left join DimDate d
-                      on s.orderDateKey = d.DateKey),
-                      
-                      ventas_reseller(OrderDateKey,CalendarYear,SpanishMonthName,MonthNumberofYear,salesamount,OrderQuantity,totalProductCost,
-                                            canal, gananciaTotal)
-                      as
-                      (select OrderDateKey,CalendarYear,SpanishMonthName,MonthNumberofYear,salesamount,OrderQuantity,totalProductCost,
-                      'reseller (mayorista)' as canal,
-                      cast(salesamount as float) - cast(totalProductCost as float) as gananciaTotal
+    ventas_online(anio_mes,salesamount,OrderQuantity,totalProductCost,
+                                            canal, gananciaTotal) AS
+                                            
+                      (SELECT cast(left(OrderDateKey,6) as integer) AS anio_mes
+                              ,salesamount
+                              ,OrderQuantity
+                              ,totalProductCost
+                              ,'reseller (minorista)' AS canal
+                              ,CAST(salesamount as float) - CAST(totalProductCost as float) as gananciaTotal
+                      FROM FactInternetSales s
+                      ),
                        
-                      from FactResellerSales s
-                      left join DimDate d
-                      on s.orderDateKey = d.DateKey)
+    Sales(anio_mes,salesamount,OrderQuantity,totalProductCost,
+                                            canal, gananciaTotal) AS
+                      (SELECT * FROM ventas_online
+                      UNION ALL
+                      SELECT * FROM ventas_reseller),
                       
-                      select CalendarYear as anio,
-                              SpanishMonthName as mes,
-                              MonthNumberofYear as mes_num,
-                              left(OrderDateKey,6) as anio_mes,
-                              sum(cast(salesAmount as float)) as ingreso_ventas_total,
-                              sum(gananciaTotal) as ganancia_total,
-                              sum(orderQuantity) as unidades_vendidas,
-                              round(100 * sum(gananciaTotal)/sum(cast(totalProductCost as float)),1) as margenGananciaPc 
-                      from (select * from ventas_online
-                            union all
-                            select * from ventas_reseller
-                            ) as c 
-                      group by CalendarYear,SpanishMonthName,MonthNumberofYear,left(OrderDateKey,6)
-                      order by CalendarYear,MonthNumberofYear
-                      "
+    MinMaxAnioMes(min_aniomes,max_aniomes) AS
+                      (SELECT min(anio_mes) as min_aniomes, 
+                              max(anio_mes) as max_aniomes
+                      FROM sales),
+
+    MesesFull(anio_mes) AS
+       (
+       SELECT min_aniomes as anio_mes
+       from MinMaxAnioMes
+            
+       UNION ALL
+
+       SELECT 
+       CASE WHEN anio_mes % 100 = 12 THEN anio_mes + 100 - 11
+       ELSE anio_mes + 1 END AS anio_mes
+       FROM mesesfull
+       WHERE anio_mes < (select max_aniomes from MinMaxAnioMes)
+       ),
+       
+    CanalFull(canal) AS
+      (SELECT DISTINCT canal FROM sales),
+                    
+    Agrupado1 AS
+      (SELECT  CAST(m.anio_mes AS CHAR) AS anio_mes
+            ,cf.canal
+            ,ISNULL(sum(cast(salesAmount as float)),0) as ingreso_ventas_canal
+            ,ISNULL(sum(gananciaTotal),0) as ganancia_canal
+            ,ISNULL(SUM(orderQuantity),0) as unidades_vendidas_canal
+            ,ISNULL(CASE WHEN 
+                        ISNULL(SUM(cast(salesAmount as float)),0) > 0 
+                        THEN round(100 * ISNULL(sum(gananciaTotal),0)/ISNULL(sum(cast(salesAmount as float)),0),1) ELSE 0 END,0) as margenGananciaPc
+
+    FROM mesesfull m
+    CROSS JOIN canalfull cf
+    LEFT JOIN sales AS c 
+    ON m.anio_mes = c.anio_mes and cf.canal = c.canal
+    GROUP BY m.anio_mes,cf.canal)
+    
+    SELECT a.*
+          ,AVG(ingreso_ventas_canal) OVER (PARTITION BY canal ORDER BY anio_mes ROWS BETWEEN 6 PRECEDING AND 6 FOLLOWING) AS mmovil_ventas_canal
+          ,AVG(ganancia_canal) OVER (PARTITION BY canal ORDER BY anio_mes ROWS BETWEEN 6 PRECEDING AND 6 FOLLOWING) AS mmovil_ganancia_canal
+          ,AVG(margenGananciaPc) OVER (PARTITION BY canal ORDER BY anio_mes ROWS BETWEEN 6 PRECEDING AND 6 FOLLOWING) AS mmovil_margen_canal
+    FROM agrupado1 a
+    ORDER BY anio_mes,canal
+    "
                       
-UNPIVOT  
-(Orders FOR Employee IN   
-  (Emp1, Emp2, Emp3, Emp4, Emp5) 
 
 
 total_ganancia_mes <- dbGetQuery(conn = on,q_total_ganancia_mes)
@@ -77,19 +117,41 @@ total_ganancia_mes <- dbGetQuery(conn = on,q_total_ganancia_mes)
 
 library(ggplot2)
 
-graf_mes <- ggplot(data = total_ganancia_mes,aes(x = anio_mes, group = 1)) + 
-            geom_line(aes(y = ingreso_ventas_total/1000000), color = "darkred") + 
-            geom_line(aes(y = ganancia_total/1000000), color="steelblue") +
-            theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-            scale_colour_manual("", 
-                      breaks = c("ingreso_ventas_total", "ganancia_total"),
-                      values = c("darkred", "steelblue"),
-                      guide = 'legend') +
-            xlab("periodo (año - mes") +
+graf_mes <- ggplot(data = total_ganancia_mes,aes(x = anio_mes)
+                                            
+                                            ) +
+            geom_line(aes(y = ingreso_ventas_canal/1000000,
+                              colour = canal,
+                              group = canal)) +
+          geom_line(aes(y = mmovil_ventas_canal/1000000,
+                colour = canal,
+                group = canal),
+                linetype = 'dotted',
+                linewidth = 1) +
+            theme(axis.text.x = element_text(angle = 90,
+                                             vjust = 0.5,
+                                             hjust = 1,
+                                             margin = margin(t = -50)),
+                  legend.position = 'bottom',
+                  legend.title = element_blank()) +
+            xlab("periodo (año - mes)") +
             ylab("Millones de US$")
-  
-  
 
-graf_mes
-                      
+graf_mes  
 
+# graf_mes <- ggplot(data = total_ganancia_mes,aes(x = anio_mes, group = 1)) +
+#             geom_line(aes(y = ingreso_ventas_total/1000000, 
+#                           color = 'ingreso_ventas_total')) + 
+#             geom_line(aes(y = ganancia_total/1000000, 
+#                           color='ganancia_total')) +
+#             theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+#                   legend.position = 'bottom') +
+#             scale_color_manual(
+#                 values = c('ingreso_ventas_total' = 'blue', 
+#                            'ganancia_total' = 'red'),
+#                 name = '') +
+#             xlab("periodo (año - mes") +
+#             ylab("Millones de US$")
+
+
+  
