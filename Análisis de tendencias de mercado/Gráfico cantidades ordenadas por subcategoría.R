@@ -1,4 +1,5 @@
 library(odbc)
+library(DBI)
 library(tidyverse)
 
 sort(unique(odbcListDrivers()[[1]]))
@@ -37,7 +38,7 @@ DateRange([Date]) AS (
 					FROM MinMaxDate)		
 ),
 FactorTable(Subcat,YearMonth,[Year],[Month],MonthNumber) AS (
-	SELECT c.Subcat,YEAR([Date])*100+MONTH([Date]),YEAR([Date]),MONTH([Date]),
+	SELECT c.Subcat,YEAR([Date])*100+MONTH([Date])/12*100,YEAR([Date]),MONTH([Date]),
 	   	   ROW_NUMBER() OVER(PARTITION BY c.Subcat ORDER BY YEAR([Date]),MONTH([Date])) 
 	FROM DateRange CROSS JOIN (SELECT DISTINCT Subcat FROM OrderQtyPerMonth) AS c
 ),
@@ -55,6 +56,6 @@ df <- dbGetQuery(on,query) %>%
   mutate(EnglishProductCategoryName = as.factor(EnglishProductCategoryName),
          EnglishProductSubcategoryName = as.factor(EnglishProductSubcategoryName))
 
-df %>% ggplot(aes(x = YearMonth, group = 1)) +
+df %>% ggplot(aes(x = YearMonth)) +
   geom_line(aes(y = OrderQty, color = EnglishProductSubcategoryName)) +
-  facet_wrap(vars(EnglishProductCategoryName))
+  facet_wrap(vars(EnglishProductCategoryName),ncol=2)
