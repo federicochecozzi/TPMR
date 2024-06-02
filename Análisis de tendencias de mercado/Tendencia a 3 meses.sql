@@ -41,7 +41,7 @@ SumOrderQtyPerMonth(Subcat,[Year],[Month],MonthNumber,OrderQty,sumx,sumy,sumxx,s
 		   SUM(OrderQty*MonthNumber) OVER(PARTITION BY Subcat ORDER BY MonthNumber ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)
 	FROM ExtendedOrderQtyPerMonth
 )
-SELECT Subcat,[Year],[Month],MonthNumber,OrderQty,(3*sumxy-sumx*sumy)/(3*sumxx-sumx*sumx) AS ThreeMonthTendency
+SELECT Subcat,[Year],[Month],MonthNumber,OrderQty,(3*sumxy-sumx*sumy)/(3*sumxx-sumx*sumx) AS ThreeMonthTrend
 FROM SumOrderQtyPerMonth
 
 --SELECT dd.CalendarYear, dd.MonthNumberOfYear, fis.OrderDate, dp.ProductSubcategoryKey,
