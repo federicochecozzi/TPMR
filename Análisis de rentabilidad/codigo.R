@@ -101,9 +101,9 @@ q_total_ganancia_mes <- "
     GROUP BY ROLLUP(m.anio_mes,cf.canal))
     
     SELECT a.*
-          ,AVG(ingreso_ventas_canal) OVER (PARTITION BY canal ORDER BY anio_mes ROWS BETWEEN 6 PRECEDING AND 6 FOLLOWING) AS mmovil_ventas
-          ,AVG(ganancia_canal) OVER (PARTITION BY canal ORDER BY anio_mes ROWS BETWEEN 6 PRECEDING AND 6 FOLLOWING) AS mmovil_ganancia
-          ,AVG(margenGananciaPc) OVER (PARTITION BY canal ORDER BY anio_mes ROWS BETWEEN 6 PRECEDING AND 6 FOLLOWING) AS mmovil_margen
+          ,AVG(ingreso_ventas_canal) OVER (PARTITION BY canal ORDER BY anio_mes ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS mmovil_ventas
+          ,AVG(ganancia_canal) OVER (PARTITION BY canal ORDER BY anio_mes ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS mmovil_ganancia
+          ,AVG(margenGananciaPc) OVER (PARTITION BY canal ORDER BY anio_mes ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS mmovil_margen
     
     FROM agrupado1 a
     WHERE anio_mes <> 'Total'
@@ -126,7 +126,7 @@ graf_mes_ventas <- ggplot(data = total_ganancia_mes,aes(x = anio_mes)
                 colour = canal,
                 group = canal),
             linewidth = 1.1) +
-  geom_line(aes(y = mmovil_ventas_canal/1000000,
+  geom_line(aes(y = mmovil_ventas/1000000,
                 colour = canal,
                 group = canal),
             linetype = 'dotted',
@@ -152,12 +152,13 @@ graf_mes_ganancia <- ggplot(data = total_ganancia_mes,aes(x = anio_mes)
 ) +
   geom_line(aes(y = ganancia_canal/1000,
                 colour = canal,
-                group = canal)) +
-  geom_line(aes(y = mmovil_ganancia_canal/1000,
+                group = canal),
+            linewidth = 1.1) +
+  geom_line(aes(y = mmovil_ganancia/1000,
                 colour = canal,
                 group = canal),
             linetype = 'dotted',
-            linewidth = 1) +
+            linewidth = 1.1) +
   theme(axis.text.x = element_text(angle = 90,
                                    vjust = 0.5,
                                    hjust = 1,
@@ -172,51 +173,6 @@ graf_mes_ganancia <- ggplot(data = total_ganancia_mes,aes(x = anio_mes)
   ylab("Miles de US$")
 
 graf_mes_ganancia  
-
-
-graf_mes_margen <- ggplot(data = total_ganancia_mes,aes(x = anio_mes)
-                            
-) +
-  geom_line(aes(y = margenGananciaPc,
-                colour = canal,
-                group = canal),
-            linewidth = 1.1) +
-  geom_line(aes(y = mmovil_margen,
-                colour = canal,
-                group = canal),
-            linetype = 'dotted',
-            linewidth = 1.1) +
-  theme(axis.text.x = element_text(angle = 90,
-                                   vjust = 0.5,
-                                   hjust = 1,
-                                   margin = margin(t = -50)),
-        legend.position = 'bottom',
-        legend.title = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.major = element_line(size = 0.25, linetype = 'solid',
-                                        colour = "gray"))+
-  xlab("periodo (año - mes)") +
-  ylab("Miles de US$")
-
-graf_mes_margen
-
-
-
-
-
-# graf_mes <- ggplot(data = total_ganancia_mes,aes(x = anio_mes, group = 1)) +
-#             geom_line(aes(y = ingreso_ventas_total/1000000, 
-#                           color = 'ingreso_ventas_total')) + 
-#             geom_line(aes(y = ganancia_total/1000000, 
-#                           color='ganancia_total')) +
-#             theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-#                   legend.position = 'bottom') +
-#             scale_color_manual(
-#                 values = c('ingreso_ventas_total' = 'blue', 
-#                            'ganancia_total' = 'red'),
-#                 name = '') +
-#             xlab("periodo (año - mes") +
-#             ylab("Millones de US$")
 
 
 
@@ -309,6 +265,10 @@ q_total_ganancia_region <- "
     
     
     SELECT a.*
+    ,AVG(ingreso_ventas_canal) OVER (PARTITION BY region,canal ORDER BY trim_anio ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS mmovil_ventas
+          ,AVG(ganancia_canal) OVER (PARTITION BY region,canal ORDER BY trim_anio ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS mmovil_ganancia
+          ,AVG(margenGananciaPc) OVER (PARTITION BY region,canal ORDER BY trim_anio ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS mmovil_margen
+    
     FROM agrupado1 a
     WHERE trim_anio <> 'Total' and region <> 'Total'
     ORDER BY trim_anio,region
@@ -329,6 +289,11 @@ graf_region_ventas <- ggplot(data = total_ganancia_region,aes(x = trim_anio)
   geom_line(aes(y = ingreso_ventas_canal/1000000,
                 colour = canal,
                 group = canal),
+            linewidth = 1.1) +
+  geom_line(aes(y = mmovil_ventas/1000000,
+                colour = canal,
+                group = canal),
+            linetype = 'dotted',
             linewidth = 1.1) +
   theme(axis.text.x = element_text(angle = 90,
                                    vjust = 0.5,
@@ -353,6 +318,11 @@ graf_region_ganancia <- ggplot(data = total_ganancia_region,aes(x = trim_anio)
   geom_line(aes(y = ganancia_canal/1000,
                 colour = canal,
                 group = canal),
+            linewidth = 1.1) +
+  geom_line(aes(y = mmovil_ganancia/1000,
+                colour = canal,
+                group = canal),
+            linetype = 'dotted',
             linewidth = 1.1) +
   theme(axis.text.x = element_text(angle = 90,
                                    vjust = 0.5,
