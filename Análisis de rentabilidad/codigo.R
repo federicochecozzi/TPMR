@@ -265,9 +265,9 @@ q_total_ganancia_region <- "
     
     
     SELECT a.*
-    ,AVG(ingreso_ventas_canal) OVER (PARTITION BY region,canal ORDER BY trim_anio ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS mmovil_ventas
-          ,AVG(ganancia_canal) OVER (PARTITION BY region,canal ORDER BY trim_anio ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS mmovil_ganancia
-          ,AVG(margenGananciaPc) OVER (PARTITION BY region,canal ORDER BY trim_anio ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS mmovil_margen
+    ,AVG(ingreso_ventas_canal) OVER (PARTITION BY region,canal ORDER BY trim_anio ROWS BETWEEN 3 PRECEDING AND CURRENT ROW) AS mmovil_ventas
+          ,AVG(ganancia_canal) OVER (PARTITION BY region,canal ORDER BY trim_anio ROWS BETWEEN 3 PRECEDING AND CURRENT ROW) AS mmovil_ganancia
+          ,AVG(margenGananciaPc) OVER (PARTITION BY region,canal ORDER BY trim_anio ROWS BETWEEN 3 PRECEDING AND CURRENT ROW) AS mmovil_margen
     
     FROM agrupado1 a
     WHERE trim_anio <> 'Total' and region <> 'Total'
@@ -340,19 +340,146 @@ graf_region_ganancia <- ggplot(data = total_ganancia_region,aes(x = trim_anio)
 
 graf_region_ganancia  
 
-### Por categoria de producto
+### Por categoria de producto -----
+
+q_total_ganancia_producto <- "
+
+                      WITH 
+	ventas_reseller(trim_anio,
+	               salesterritorygroup,
+	               cat_producto,
+	                salesamount,OrderQuantity,totalProductCost,
+                  canal, gananciaTotal) AS
+                      (SELECT 
+                            concat(CalendarYear,'_',CalendarQuarter) as trim_anio
+                            ,salesterritorygroup
+                            ,spanishproductcategoryname as cat_producto
+                            ,salesamount
+                            ,OrderQuantity
+                            ,totalProductCost
+                            ,'reseller (mayorista)' as canal
+                            ,cast(salesamount as float) - cast(totalProductCost as float) as gananciaTotal
+                      
+      				   FROM FactResellerSales s
+      				   LEFT JOIN DimSalesTerritory t
+                      on s.SalesTerritoryKey = t.SalesTerritoryKey
+                  LEFT JOIN DimDate d 
+                      on s.OrderDateKey = d.DateKey 
+                  LEFT JOIN DimProduct p
+                      on s.ProductKey = p.ProductKey
+                  LEFT JOIN DimProductSubCategory ps
+                      on p.ProductSubCategoryKey = ps.ProductSubCategoryKey
+                  LEFT JOIN DimProductCategory pc
+                      on ps.ProductCategoryKey = pc.ProductCategoryKey
+                      ),
+                      
+    ventas_online(trim_anio,
+	               salesterritorygroup,
+	               cat_producto,
+	                salesamount,OrderQuantity,totalProductCost,
+                  canal, gananciaTotal) AS
+                      (SELECT 
+                            concat(CalendarYear,'_',CalendarQuarter) as trim_anio
+                            ,salesterritorygroup
+                            ,spanishproductcategoryname as cat_producto
+                            ,salesamount
+                            ,OrderQuantity
+                            ,totalProductCost
+                              ,'online (minorista)' AS canal
+                              ,CAST(salesamount as float) - CAST(totalProductCost as float) as gananciaTotal
+                  FROM FactInternetSales s
+                  LEFT JOIN DimSalesTerritory t
+                  on s.SalesTerritoryKey = t.SalesTerritoryKey
+                  LEFT JOIN DimDate d 
+                  on s.OrderDateKey = d.DateKey
+                      LEFT JOIN DimProduct p
+                      on s.ProductKey = p.ProductKey
+                      LEFT JOIN DimProductSubCategory ps
+                      on p.ProductSubCategoryKey = ps.ProductSubCategoryKey
+                      LEFT JOIN DimProductCategory pc
+                      on ps.ProductCategoryKey = pc.ProductCategoryKey
+                      ),
+                       
+    Sales(trim_anio,salesterritorygroup,
+          cat_producto,
+	            salesamount,OrderQuantity,totalProductCost,
+              canal, gananciaTotal) AS
+                      (SELECT * FROM ventas_online
+                      UNION ALL
+                      SELECT * FROM ventas_reseller),
+                      
+    CatFull(cat_producto) AS
+                      (SELECT DISTINCT cat_producto
+                      FROM Sales),
+                      
+    RegionFull(salesterritorygroup) AS
+                      (SELECT DISTINCT salesterritorygroup
+                      FROM Sales),
+
+    AnioFull(trim_anio) AS
+       (
+       SELECT DISTINCT trim_anio
+                      FROM Sales
+       ),
+       
+    CanalFull(canal) AS
+      (SELECT DISTINCT canal FROM sales),
+                    
+    Agrupado1 AS
+      (SELECT  ISNULL(CAST(m.trim_anio AS CHAR),'Total') AS trim_anio
+            ,ISNULL(r.SalesTerritoryGroup,'Total') AS region
+            ,ISNULL(cp.cat_producto,'Total') AS cat_producto
+            ,ISNULL(cf.canal,'Total') as canal
+            ,ISNULL(sum(cast(salesAmount as float)),0) as ingreso_ventas_canal
+            ,ISNULL(sum(gananciaTotal),0) as ganancia_canal
+            ,ISNULL(SUM(orderQuantity),0) as unidades_vendidas_canal
+            ,ISNULL(CASE WHEN 
+                        ISNULL(SUM(cast(salesAmount as float)),0) > 0 
+                        THEN round(100 * ISNULL(sum(gananciaTotal),0)/ISNULL(sum(cast(salesAmount as float)),0),1) ELSE 0 END,0) as margenGananciaPc
+
+    FROM AnioFull m
+    CROSS JOIN canalfull cf
+    CROSS JOIN regionfull r
+    CROSS JOIN catfull cp
+    LEFT JOIN sales AS s 
+    ON m.trim_anio = s.trim_anio and 
+       cf.canal = s.canal and 
+       r.SalesTerritoryGroup = s.SalesTerritoryGroup and
+       cp.cat_producto = s.cat_producto
+    GROUP BY ROLLUP(m.trim_anio,r.SalesTerritoryGroup,cf.canal,cp.cat_producto)
+    )
+    
+    
+    SELECT a.*
+    ,AVG(ingreso_ventas_canal) OVER (PARTITION BY region,canal,cat_producto ORDER BY trim_anio ROWS BETWEEN 3 PRECEDING AND CURRENT ROW) AS mmovil_ventas
+          ,AVG(ganancia_canal) OVER (PARTITION BY region,canal,cat_producto ORDER BY trim_anio ROWS BETWEEN 3 PRECEDING AND CURRENT ROW) AS mmovil_ganancia
+          ,AVG(margenGananciaPc) OVER (PARTITION BY region,canal,cat_producto ORDER BY trim_anio ROWS BETWEEN 3 PRECEDING AND CURRENT ROW) AS mmovil_margen
+    
+    FROM agrupado1 a
+    WHERE trim_anio <> 'Total' and region <> 'Total' and cat_producto <> 'Total'
+    ORDER BY trim_anio,region,cat_producto
+    "
 
 
 
+total_ganancia_producto <- dbGetQuery(conn = on,q_total_ganancia_producto)
 
-graf_mes_margen <- ggplot(data = total_ganancia_mes,aes(x = anio_mes)
-                          
+
+
+# Grafico 
+
+library(ggplot2)
+
+
+### Graf ganancia
+graf_producto_ganancia <- ggplot(data = total_ganancia_producto,aes(x = trim_anio)
+                               
 ) +
-  geom_line(aes(y = margenGananciaPc,
+  geom_line(aes(y = ganancia_canal/1000,
                 colour = canal,
                 group = canal),
             linewidth = 1.1) +
-  geom_line(aes(y = mmovil_margen,
+  geom_line(aes(y = mmovil_ganancia/1000,
                 colour = canal,
                 group = canal),
             linetype = 'dotted',
@@ -365,8 +492,12 @@ graf_mes_margen <- ggplot(data = total_ganancia_mes,aes(x = anio_mes)
         legend.title = element_blank(),
         panel.background = element_blank(),
         panel.grid.major = element_line(size = 0.25, linetype = 'solid',
-                                        colour = "gray"))+
-  xlab("periodo (año - mes)") +
-  ylab("Miles de US$")
+                                        colour = "gray"), 
+        panel.grid.minor = element_blank()) + 
+  xlab("periodo (año - trimestre)") +
+  ylab("Miles de US$") +
+  facet_grid(cat_producto ~ region)
 
-graf_mes_margen
+graf_producto_ganancia  
+
+
