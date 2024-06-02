@@ -1,9 +1,11 @@
 WITH FactSales(ProductID,OrderDateKey,OrderQty) AS (
 	SELECT fis.ProductKey,fis.OrderDateKey, fis.OrderQuantity
 	FROM AdventureWorksDW2019.dbo.FactInternetSales fis
+	--WHERE fis.OrderDate >= CAST('20130901' AS DATE)
 	UNION
 	SELECT frs.ProductKey,frs.OrderDateKey, frs.OrderQuantity
 	FROM AdventureWorksDW2019.dbo.FactResellerSales frs
+	--WHERE frs.OrderDate >= CAST('20130901' AS DATE)
 ),
 OrderQtyTable(ProductID,[Year],[Month],OrderQty) AS(
 	SELECT fs.ProductID,dd.CalendarYear, dd.MonthNumberOfYear, SUM(fs.OrderQty) AS OrderQty
@@ -40,17 +42,17 @@ ExtendedOrderQtyTable(ProductID,[Year],[Month],MonthNumber,OrderQty) AS (
 ),
 SumOrderQtyTable(ProductID,[Year],[Month],MonthNumber,OrderQty,sumx,sumy,sumxx,sumxy) AS (
 	SELECT ProductID,[Year],[Month],MonthNumber,OrderQty, 
-		   SUM(MonthNumber) OVER(PARTITION BY ProductID ORDER BY MonthNumber ROWS BETWEEN 2 PRECEDING AND CURRENT ROW),
-		   SUM(OrderQty) OVER(PARTITION BY ProductID ORDER BY MonthNumber ROWS BETWEEN 2 PRECEDING AND CURRENT ROW),
-		   SUM(MonthNumber*MonthNumber) OVER(PARTITION BY ProductID ORDER BY MonthNumber ROWS BETWEEN 2 PRECEDING AND CURRENT ROW),
-		   SUM(OrderQty*MonthNumber) OVER(PARTITION BY ProductID ORDER BY MonthNumber ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)
+		   SUM(MonthNumber) OVER(PARTITION BY ProductID ORDER BY MonthNumber ROWS BETWEEN 11 PRECEDING AND CURRENT ROW),
+		   SUM(OrderQty) OVER(PARTITION BY ProductID ORDER BY MonthNumber ROWS BETWEEN 11 PRECEDING AND CURRENT ROW),
+		   SUM(MonthNumber*MonthNumber) OVER(PARTITION BY ProductID ORDER BY MonthNumber ROWS BETWEEN 11 PRECEDING AND CURRENT ROW),
+		   SUM(OrderQty*MonthNumber) OVER(PARTITION BY ProductID ORDER BY MonthNumber ROWS BETWEEN 11 PRECEDING AND CURRENT ROW)
 	FROM ExtendedOrderQtyTable
 ),
-ThreeMonthTrendOrderQty(ProductID,[Year],[Month],MonthNumber,OrderQty,Trend) AS (
-	SELECT ProductID,[Year],[Month],MonthNumber,OrderQty,(3*sumxy-sumx*sumy)/(3.0*sumxx-sumx*sumx)
+OneYearTrendOrderQty(ProductID,[Year],[Month],MonthNumber,OrderQty,Trend) AS (
+	SELECT ProductID,[Year],[Month],MonthNumber,OrderQty,(12*sumxy-sumx*sumy)/(12.0*sumxx-sumx*sumx)
 	FROM SumOrderQtyTable
 )
 SELECT TOP(20) t.ProductID, dp.EnglishProductName , t.Trend
-FROM ThreeMonthTrendOrderQty t, AdventureWorksDW2019.dbo.DimProduct dp 
-WHERE t.ProductID = dp.ProductKey AND MonthNumber = 38
+FROM OneYearTrendOrderQty t, AdventureWorksDW2019.dbo.DimProduct dp 
+WHERE t.ProductID = dp.ProductKey AND MonthNumber = 37
 ORDER BY Trend DESC
