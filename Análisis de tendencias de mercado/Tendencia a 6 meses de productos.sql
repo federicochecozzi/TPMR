@@ -1,11 +1,9 @@
 WITH FactSales(ProductID,OrderDateKey,OrderQty) AS (
 	SELECT fis.ProductKey,fis.OrderDateKey, fis.OrderQuantity
 	FROM AdventureWorksDW2019.dbo.FactInternetSales fis
-	WHERE fis.OrderDate >= CAST('20130901' AS DATE)
 	UNION
 	SELECT frs.ProductKey,frs.OrderDateKey, frs.OrderQuantity
 	FROM AdventureWorksDW2019.dbo.FactResellerSales frs
-	WHERE frs.OrderDate >= CAST('20130901' AS DATE)
 ),
 OrderQtyTable(ProductID,[Year],[Month],OrderQty) AS(
 	SELECT fs.ProductID,dd.CalendarYear, dd.MonthNumberOfYear, SUM(fs.OrderQty) AS OrderQty
@@ -49,10 +47,10 @@ SumOrderQtyTable(ProductID,[Year],[Month],MonthNumber,OrderQty,sumx,sumy,sumxx,s
 	FROM ExtendedOrderQtyTable
 ),
 SixMonthTrendOrderQty(ProductID,[Year],[Month],MonthNumber,OrderQty,Trend) AS (
-	SELECT ProductID,[Year],[Month],MonthNumber,OrderQty,(6*sumxy-sumx*sumy)/(6*sumxx-sumx*sumx)
+	SELECT ProductID,[Year],[Month],MonthNumber,OrderQty,(6*sumxy-sumx*sumy)/(6.0*sumxx-sumx*sumx)
 	FROM SumOrderQtyTable
 )
 SELECT TOP(20) t.ProductID, dp.EnglishProductName , t.Trend
 FROM SixMonthTrendOrderQty t, AdventureWorksDW2019.dbo.DimProduct dp 
-WHERE t.ProductID = dp.ProductKey AND MonthNumber = 6
+WHERE t.ProductID = dp.ProductKey AND MonthNumber = 38
 ORDER BY Trend DESC
