@@ -12,7 +12,7 @@ on <- dbConnect(odbc(),
                 pwd = "mrcd2023")
 
 query <- 
- "WITH OrderQtyPerMonth([Year],[Month],Subcat,OrderQty) AS(
+  "WITH OrderQtyPerMonth([Year],[Month],Subcat,OrderQty) AS(
 	SELECT dd.CalendarYear, dd.MonthNumberOfYear, dp.ProductSubcategoryKey,
 	SUM(fis.OrderQuantity) AS OrderQty
 	FROM AdventureWorksDW2019.dbo.FactInternetSales fis, 
@@ -38,7 +38,7 @@ DateRange([Date]) AS (
 					FROM MinMaxDate)		
 ),
 FactorTable(Subcat,YearMonth,[Year],[Month],MonthNumber) AS (
-	SELECT c.Subcat,YEAR([Date])*100+MONTH([Date])/12*100,YEAR([Date]),MONTH([Date]),
+	SELECT c.Subcat,CAST((YEAR([Date])*100+MONTH([Date])) AS CHAR),YEAR([Date]),MONTH([Date]),
 	   	   ROW_NUMBER() OVER(PARTITION BY c.Subcat ORDER BY YEAR([Date]),MONTH([Date])) 
 	FROM DateRange CROSS JOIN (SELECT DISTINCT Subcat FROM OrderQtyPerMonth) AS c
 ),
@@ -57,5 +57,18 @@ df <- dbGetQuery(on,query) %>%
          EnglishProductSubcategoryName = as.factor(EnglishProductSubcategoryName))
 
 df %>% ggplot(aes(x = YearMonth)) +
-  geom_line(aes(y = OrderQty, color = EnglishProductSubcategoryName)) +
-  facet_wrap(vars(EnglishProductCategoryName),ncol=2)
+  geom_line(aes(y = OrderQty, color = EnglishProductSubcategoryName, group = EnglishProductSubcategoryName)) +
+  facet_wrap(vars(EnglishProductCategoryName),ncol=2)+
+  theme(axis.text.x = element_text(angle = 90,
+                                   vjust = 0.5,
+                                   hjust = 1,
+                                   margin = margin(t = -50)),
+        legend.position = 'bottom',
+        legend.title = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.major = element_line(size = 0.25, linetype = 'solid',
+                                        colour = "gray"), 
+        panel.grid.minor = element_blank()) + 
+  xlab("Periodo (Año - Mes)") +
+  ylab("Cantidad Ordenada")
+
