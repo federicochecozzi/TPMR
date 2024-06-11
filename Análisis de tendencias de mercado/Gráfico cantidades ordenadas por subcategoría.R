@@ -1,9 +1,9 @@
 library(odbc)
 library(DBI)
-library(tidyverse)
 library(gridExtra)
+library(tidyverse)
 
-sort(unique(odbcListDrivers()[[1]]))
+#sort(unique(odbcListDrivers()[[1]]))
 
 on <- dbConnect(odbc(),
                 Driver = "SQL Server",
@@ -138,6 +138,83 @@ FROM ExtendedOrderQtyPerMonth eoqpm, AdventureWorksDW2019.dbo.DimProductSubcateg
 WHERE eoqpm.Subcat = dps.ProductSubcategoryKey AND dps.ProductCategoryKey = dpc.ProductCategoryKey "
 
 df <- dbGetQuery(on,queryreseller) %>% 
+  mutate(EnglishProductCategoryName = as.factor(EnglishProductCategoryName),
+         EnglishProductSubcategoryName = as.factor(EnglishProductSubcategoryName))
+
+
+ds <- split(df,f=df$EnglishProductCategoryName)
+p1 <- ggplot(ds$Accessories,aes(x = YearMonth)) + 
+  geom_line(aes(y = OrderQty, color = EnglishProductSubcategoryName, group = EnglishProductSubcategoryName)) + 
+  facet_wrap(vars(EnglishProductCategoryName), ncol=1) +
+  theme(axis.text.x = element_text(angle = 90,
+                                   vjust = 0.5,
+                                   hjust = 1,
+                                   margin = margin(t = -50)),
+        legend.position = 'right',
+        legend.title = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.major = element_line(size = 0.25, linetype = 'solid',
+                                        colour = "gray"), 
+        panel.grid.minor = element_blank()) + 
+  xlab("Periodo (Año - Mes)") +
+  ylab("Cantidad Ordenada")
+
+p2 <- p1 %+% ds$Bikes
+p3 <- p1 %+% ds$Clothing
+p4 <- p1 %+% ds$Components
+
+grid.arrange(p1,p2,p3,p4)
+
+querytotal <- 
+  "WITH FactSales(ProductID,OrderDateKey,OrderQty) AS (
+	SELECT fis.ProductKey,fis.OrderDateKey, fis.OrderQuantity
+	FROM AdventureWorksDW2019.dbo.FactInternetSales fis
+	UNION ALL
+	SELECT frs.ProductKey,frs.OrderDateKey, frs.OrderQuantity
+	FROM AdventureWorksDW2019.dbo.FactResellerSales frs
+),
+OrderQtyPerMonth([Year],[Month],Subcat,OrderQty) AS(
+	SELECT dd.CalendarYear, dd.MonthNumberOfYear, dp.ProductSubcategoryKey,
+	SUM(fs.OrderQty) AS OrderQty
+	FROM FactSales fs, 
+		AdventureWorksDW2019.dbo.DimProduct dp, 
+		AdventureWorksDW2019.dbo.DimProductSubcategory dps,
+		AdventureWorksDW2019.dbo.DimDate dd 
+	WHERE fs.ProductID = dp.ProductKey AND 
+		dp.ProductSubcategoryKey = dps.ProductSubcategoryKey AND 
+		fs.OrderDateKey = dd.DateKey 
+	GROUP BY dd.CalendarYear, dd.MonthNumberOfYear, dp.ProductSubcategoryKey
+),
+MinMaxDate(OldestDate,NewestDate) AS (
+	SELECT MIN(dd.FullDateAlternateKey), MAX(dd.FullDateAlternateKey)
+	FROM FactSales fs, AdventureWorksDW2019.dbo.DimDate dd
+	WHERE fs.OrderDateKey = dd.DateKey 
+),
+DateRange([Date]) AS (
+	SELECT OldestDate AS [Date]
+	FROM MinMaxDate
+	UNION ALL
+	SELECT DATEADD( m , 1 , [Date]) AS [Date]
+	FROM DateRange
+	WHERE [Date] < (SELECT NewestDate
+					FROM MinMaxDate)		
+),
+FactorTable(Subcat,YearMonth,[Year],[Month],MonthNumber) AS (
+	SELECT c.Subcat,CAST((YEAR([Date])*100+MONTH([Date])) AS CHAR),YEAR([Date]),MONTH([Date]),
+	   	   ROW_NUMBER() OVER(PARTITION BY c.Subcat ORDER BY YEAR([Date]),MONTH([Date])) 
+	FROM DateRange CROSS JOIN (SELECT DISTINCT Subcat FROM OrderQtyPerMonth) AS c
+),
+ExtendedOrderQtyPerMonth(Subcat,YearMonth,[Year],[Month],MonthNumber,OrderQty) AS (
+	SELECT ft.Subcat,ft.YearMonth,ft.[Year],ft.[Month], ft.MonthNumber, ISNULL(oqpm.OrderQty,0) AS OrderQty
+	FROM FactorTable ft LEFT JOIN OrderQtyPerMonth oqpm ON 
+	ft.Subcat = oqpm.Subcat AND ft.[Year] = oqpm.[Year] AND ft.[Month] = oqpm.[Month] 
+)
+SELECT dpc.EnglishProductCategoryName, dps.EnglishProductSubcategoryName, 
+	   eoqpm.YearMonth, eoqpm.[Year],eoqpm.[Month],eoqpm.MonthNumber,eoqpm.OrderQty
+FROM ExtendedOrderQtyPerMonth eoqpm, AdventureWorksDW2019.dbo.DimProductSubcategory dps, AdventureWorksDW2019.dbo.DimProductCategory dpc 
+WHERE eoqpm.Subcat = dps.ProductSubcategoryKey AND dps.ProductCategoryKey = dpc.ProductCategoryKey "
+
+df <- dbGetQuery(on,querytotal) %>% 
   mutate(EnglishProductCategoryName = as.factor(EnglishProductCategoryName),
          EnglishProductSubcategoryName = as.factor(EnglishProductSubcategoryName))
 

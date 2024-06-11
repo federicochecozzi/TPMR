@@ -105,7 +105,7 @@ ThreeMonthTrendOrderQty(ProductID,[Year],[Month],MonthNumber,OrderQty,Trend) AS 
 )
 SELECT TOP(20) t.ProductID, dp.EnglishProductName , t.Trend
 FROM ThreeMonthTrendOrderQty t, AdventureWorksDW2019.dbo.DimProduct dp 
-WHERE t.ProductID = dp.ProductKey AND MonthNumber = 38
+WHERE t.ProductID = dp.ProductKey AND MonthNumber = 37
 ORDER BY Trend DESC
 
 --Total
