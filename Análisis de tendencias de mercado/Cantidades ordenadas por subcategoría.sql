@@ -21,8 +21,10 @@ DateRange([Date]) AS (
 	UNION ALL
 	SELECT DATEADD( m , 1 , [Date]) AS [Date]
 	FROM DateRange
-	WHERE [Date] < (SELECT NewestDate
-					FROM MinMaxDate)		
+	WHERE YEAR([Date]) < (SELECT YEAR(NewestDate)
+						  FROM MinMaxDate)	
+		  OR MONTH([Date]) < (SELECT MONTH(NewestDate)
+						  FROM MinMaxDate)		
 ),
 FactorTable(Subcat,YearMonth,[Year],[Month],MonthNumber) AS (
 	SELECT c.Subcat,YEAR([Date])*100+MONTH([Date]),YEAR([Date]),MONTH([Date]),
@@ -62,8 +64,10 @@ DateRange([Date]) AS (
 	UNION ALL
 	SELECT DATEADD( m , 1 , [Date]) AS [Date]
 	FROM DateRange
-	WHERE [Date] < (SELECT NewestDate
-					FROM MinMaxDate)		
+	WHERE YEAR([Date]) < (SELECT YEAR(NewestDate)
+						  FROM MinMaxDate)	
+		  OR MONTH([Date]) < (SELECT MONTH(NewestDate)
+						  FROM MinMaxDate)		
 ),
 FactorTable(Subcat,YearMonth,[Year],[Month],MonthNumber) AS (
 	SELECT c.Subcat,YEAR([Date])*100+MONTH([Date]),YEAR([Date]),MONTH([Date]),
@@ -111,8 +115,10 @@ DateRange([Date]) AS (
 	UNION ALL
 	SELECT DATEADD( m , 1 , [Date]) AS [Date]
 	FROM DateRange
-	WHERE [Date] < (SELECT NewestDate
-					FROM MinMaxDate)		
+	WHERE YEAR([Date]) < (SELECT YEAR(NewestDate)
+						  FROM MinMaxDate)	
+		  OR MONTH([Date]) < (SELECT MONTH(NewestDate)
+						  FROM MinMaxDate)		
 ),
 FactorTable(Subcat,YearMonth,[Year],[Month],MonthNumber) AS (
 	SELECT c.Subcat,YEAR([Date])*100+MONTH([Date]),YEAR([Date]),MONTH([Date]),

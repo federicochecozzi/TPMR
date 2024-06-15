@@ -7,11 +7,8 @@ WITH FactSales(Category,OrderDateKey,OrderQty) AS (
 ),
 OrderQtyTable(Category,[Year],[Month],OrderQty) AS(
 	SELECT fs.Category,dd.CalendarYear, dd.MonthNumberOfYear, SUM(fs.OrderQty) AS OrderQty
-	FROM FactSales fs, 
-		AdventureWorksDW2019.dbo.DimProduct dp, 
-		AdventureWorksDW2019.dbo.DimDate dd 
-	WHERE fs.Category = dp.ProductKey AND
-		fs.OrderDateKey = dd.DateKey  
+	FROM FactSales fs, AdventureWorksDW2019.dbo.DimDate dd 
+	WHERE fs.OrderDateKey = dd.DateKey  
 	GROUP BY Category,dd.CalendarYear, dd.MonthNumberOfYear
 ),
 MinMaxDate(OldestDate,NewestDate) AS (
@@ -25,8 +22,10 @@ DateRange([Date]) AS (
 	UNION ALL
 	SELECT DATEADD( m , 1 , [Date]) AS [Date]
 	FROM DateRange
-	WHERE [Date] < (SELECT NewestDate
-					FROM MinMaxDate)		
+	WHERE YEAR([Date]) < (SELECT YEAR(NewestDate)
+						  FROM MinMaxDate)	
+		  OR MONTH([Date]) < (SELECT MONTH(NewestDate)
+						  FROM MinMaxDate)		
 ),
 FactorTable(Category,[Year],[Month],MonthNumber) AS (
 	SELECT c.Category,YEAR([Date]),MONTH([Date]),
@@ -64,11 +63,8 @@ WITH FactSales(Category,OrderDateKey,OrderQty) AS (
 ),
 OrderQtyTable(Category,[Year],[Month],OrderQty) AS(
 	SELECT fs.Category,dd.CalendarYear, dd.MonthNumberOfYear, SUM(fs.OrderQty) AS OrderQty
-	FROM FactSales fs, 
-		AdventureWorksDW2019.dbo.DimProduct dp, 
-		AdventureWorksDW2019.dbo.DimDate dd 
-	WHERE fs.Category = dp.ProductKey AND
-		fs.OrderDateKey = dd.DateKey  
+	FROM FactSales fs, AdventureWorksDW2019.dbo.DimDate dd 
+	WHERE fs.OrderDateKey = dd.DateKey  
 	GROUP BY Category,dd.CalendarYear, dd.MonthNumberOfYear
 ),
 MinMaxDate(OldestDate,NewestDate) AS (
@@ -82,8 +78,10 @@ DateRange([Date]) AS (
 	UNION ALL
 	SELECT DATEADD( m , 1 , [Date]) AS [Date]
 	FROM DateRange
-	WHERE [Date] < (SELECT NewestDate
-					FROM MinMaxDate)		
+	WHERE YEAR([Date]) < (SELECT YEAR(NewestDate)
+						  FROM MinMaxDate)	
+		  OR MONTH([Date]) < (SELECT MONTH(NewestDate)
+						  FROM MinMaxDate)		
 ),
 FactorTable(Category,[Year],[Month],MonthNumber) AS (
 	SELECT c.Category,YEAR([Date]),MONTH([Date]),
@@ -126,11 +124,8 @@ WITH FactSales(Category,OrderDateKey,OrderQty) AS (
 ),
 OrderQtyTable(Category,[Year],[Month],OrderQty) AS(
 	SELECT fs.Category,dd.CalendarYear, dd.MonthNumberOfYear, SUM(fs.OrderQty) AS OrderQty
-	FROM FactSales fs, 
-		AdventureWorksDW2019.dbo.DimProduct dp, 
-		AdventureWorksDW2019.dbo.DimDate dd 
-	WHERE fs.Category = dp.ProductKey AND
-		fs.OrderDateKey = dd.DateKey  
+	FROM FactSales fs, AdventureWorksDW2019.dbo.DimDate dd 
+	WHERE fs.OrderDateKey = dd.DateKey  
 	GROUP BY Category,dd.CalendarYear, dd.MonthNumberOfYear
 ),
 MinMaxDate(OldestDate,NewestDate) AS (
@@ -144,8 +139,10 @@ DateRange([Date]) AS (
 	UNION ALL
 	SELECT DATEADD( m , 1 , [Date]) AS [Date]
 	FROM DateRange
-	WHERE [Date] < (SELECT NewestDate
-					FROM MinMaxDate)		
+	WHERE YEAR([Date]) < (SELECT YEAR(NewestDate)
+						  FROM MinMaxDate)	
+		  OR MONTH([Date]) < (SELECT MONTH(NewestDate)
+						  FROM MinMaxDate)		
 ),
 FactorTable(Category,[Year],[Month],MonthNumber) AS (
 	SELECT c.Category,YEAR([Date]),MONTH([Date]),
