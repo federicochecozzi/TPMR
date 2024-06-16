@@ -35,8 +35,10 @@ DateRange([Date]) AS (
 	UNION ALL
 	SELECT DATEADD( m , 1 , [Date]) AS [Date]
 	FROM DateRange
-	WHERE [Date] < (SELECT NewestDate
-					FROM MinMaxDate)		
+	WHERE YEAR([Date]) < (SELECT YEAR(NewestDate)
+						  FROM MinMaxDate)	
+		  OR MONTH([Date]) < (SELECT MONTH(NewestDate)
+						  FROM MinMaxDate)		
 ),
 FactorTable(Subcat,YearMonth,[Year],[Month],MonthNumber) AS (
 	SELECT c.Subcat,CAST((YEAR([Date])*100+MONTH([Date])) AS CHAR),YEAR([Date]),MONTH([Date]),
@@ -48,18 +50,18 @@ ExtendedOrderQtyPerMonth(Subcat,YearMonth,[Year],[Month],MonthNumber,OrderQty) A
 	FROM FactorTable ft LEFT JOIN OrderQtyPerMonth oqpm ON 
 	ft.Subcat = oqpm.Subcat AND ft.[Year] = oqpm.[Year] AND ft.[Month] = oqpm.[Month] 
 )
-SELECT dpc.EnglishProductCategoryName, dps.EnglishProductSubcategoryName, 
+SELECT dpc.SpanishProductCategoryName, dps.SpanishProductSubcategoryName, 
 	   eoqpm.YearMonth, eoqpm.[Year],eoqpm.[Month],eoqpm.MonthNumber,eoqpm.OrderQty
 FROM ExtendedOrderQtyPerMonth eoqpm, AdventureWorksDW2019.dbo.DimProductSubcategory dps, AdventureWorksDW2019.dbo.DimProductCategory dpc 
 WHERE eoqpm.Subcat = dps.ProductSubcategoryKey AND dps.ProductCategoryKey = dpc.ProductCategoryKey "
 
-df <- dbGetQuery(on,queryinternet) %>% 
-  mutate(EnglishProductCategoryName = as.factor(EnglishProductCategoryName),
-         EnglishProductSubcategoryName = as.factor(EnglishProductSubcategoryName))
+df_internet <- dbGetQuery(on,queryinternet) %>% 
+  mutate(SpanishProductCategoryName = as.factor(SpanishProductCategoryName),
+         SpanishProductSubcategoryName = as.factor(SpanishProductSubcategoryName))
 
 # df %>% ggplot(aes(x = YearMonth)) +
-#   geom_line(aes(y = OrderQty, color = EnglishProductSubcategoryName, group = EnglishProductSubcategoryName)) +
-#   facet_wrap(vars(EnglishProductCategoryName),ncol=2)+
+#   geom_line(aes(y = OrderQty, color = SpanishProductSubcategoryName, group = SpanishProductSubcategoryName)) +
+#   facet_wrap(vars(SpanishProductCategoryName),ncol=2)+
 #   theme(axis.text.x = element_text(angle = 90,
 #                                    vjust = 0.5,
 #                                    hjust = 1,
@@ -74,10 +76,11 @@ df <- dbGetQuery(on,queryinternet) %>%
 #   ylab("Cantidad Ordenada")
 
 #https://stackoverflow.com/questions/14840542/place-a-legend-for-each-facet-wrap-grid-in-ggplot2
-ds <- split(df,f=df$EnglishProductCategoryName)
-p1 <- ggplot(ds$Accessories,aes(x = YearMonth)) + 
-  geom_line(aes(y = OrderQty, color = EnglishProductSubcategoryName, group = EnglishProductSubcategoryName)) + 
-  facet_wrap(vars(EnglishProductCategoryName), ncol=1) +
+ds_internet <- split(df_internet,f=df_internet$SpanishProductCategoryName)
+p1 <- ggplot(ds_internet$Accesorio,aes(x = YearMonth)) + 
+  geom_line(aes(y = OrderQty, color = SpanishProductSubcategoryName, group = SpanishProductSubcategoryName),
+            linewidth = 1.1) + 
+  facet_wrap(vars(SpanishProductCategoryName), ncol=1) +
   theme(axis.text.x = element_text(angle = 90,
                                    vjust = 0.5,
                                    hjust = 1,
@@ -91,10 +94,11 @@ p1 <- ggplot(ds$Accessories,aes(x = YearMonth)) +
   xlab("Periodo (Año - Mes)") +
   ylab("Cantidad Ordenada")
 
-p2 <- p1 %+% ds$Bikes
-p3 <- p1 %+% ds$Clothing
+p2 <- p1 %+% ds_internet$Bicicleta
+p3 <- p1 %+% ds_internet$Prenda
 
-grid.arrange(p1,p2,p3)
+graph_internet <- grid.arrange(p1,p2,p3)
+graph_internet
 
 queryreseller <- 
   "WITH OrderQtyPerMonth([Year],[Month],Subcat,OrderQty) AS(
@@ -119,8 +123,10 @@ DateRange([Date]) AS (
 	UNION ALL
 	SELECT DATEADD( m , 1 , [Date]) AS [Date]
 	FROM DateRange
-	WHERE [Date] < (SELECT NewestDate
-					FROM MinMaxDate)		
+	WHERE YEAR([Date]) < (SELECT YEAR(NewestDate)
+						  FROM MinMaxDate)	
+		  OR MONTH([Date]) < (SELECT MONTH(NewestDate)
+						  FROM MinMaxDate)		
 ),
 FactorTable(Subcat,YearMonth,[Year],[Month],MonthNumber) AS (
 	SELECT c.Subcat,CAST((YEAR([Date])*100+MONTH([Date])) AS CHAR),YEAR([Date]),MONTH([Date]),
@@ -132,20 +138,21 @@ ExtendedOrderQtyPerMonth(Subcat,YearMonth,[Year],[Month],MonthNumber,OrderQty) A
 	FROM FactorTable ft LEFT JOIN OrderQtyPerMonth oqpm ON 
 	ft.Subcat = oqpm.Subcat AND ft.[Year] = oqpm.[Year] AND ft.[Month] = oqpm.[Month] 
 )
-SELECT dpc.EnglishProductCategoryName, dps.EnglishProductSubcategoryName, 
+SELECT dpc.SpanishProductCategoryName, dps.SpanishProductSubcategoryName, 
 	   eoqpm.YearMonth, eoqpm.[Year],eoqpm.[Month],eoqpm.MonthNumber,eoqpm.OrderQty
 FROM ExtendedOrderQtyPerMonth eoqpm, AdventureWorksDW2019.dbo.DimProductSubcategory dps, AdventureWorksDW2019.dbo.DimProductCategory dpc 
 WHERE eoqpm.Subcat = dps.ProductSubcategoryKey AND dps.ProductCategoryKey = dpc.ProductCategoryKey "
 
-df <- dbGetQuery(on,queryreseller) %>% 
-  mutate(EnglishProductCategoryName = as.factor(EnglishProductCategoryName),
-         EnglishProductSubcategoryName = as.factor(EnglishProductSubcategoryName))
+df_reseller <- dbGetQuery(on,queryreseller) %>% 
+  mutate(SpanishProductCategoryName = as.factor(SpanishProductCategoryName),
+         SpanishProductSubcategoryName = as.factor(SpanishProductSubcategoryName))
 
 
-ds <- split(df,f=df$EnglishProductCategoryName)
-p1 <- ggplot(ds$Accessories,aes(x = YearMonth)) + 
-  geom_line(aes(y = OrderQty, color = EnglishProductSubcategoryName, group = EnglishProductSubcategoryName)) + 
-  facet_wrap(vars(EnglishProductCategoryName), ncol=1) +
+ds_reseller <- split(df_reseller,f=df_reseller$SpanishProductCategoryName)
+p1 <- ggplot(ds_reseller$Accesorio,aes(x = YearMonth)) + 
+  geom_line(aes(y = OrderQty, color = SpanishProductSubcategoryName, group = SpanishProductSubcategoryName),
+            linewidth = 1.1) + 
+  facet_wrap(vars(SpanishProductCategoryName), ncol=1) +
   theme(axis.text.x = element_text(angle = 90,
                                    vjust = 0.5,
                                    hjust = 1,
@@ -159,11 +166,12 @@ p1 <- ggplot(ds$Accessories,aes(x = YearMonth)) +
   xlab("Periodo (Año - Mes)") +
   ylab("Cantidad Ordenada")
 
-p2 <- p1 %+% ds$Bikes
-p3 <- p1 %+% ds$Clothing
-p4 <- p1 %+% ds$Components
+p2 <- p1 %+% ds_reseller$Bicicleta
+p3 <- p1 %+% ds_reseller$Prenda
+p4 <- p1 %+% ds_reseller$Componente
 
-grid.arrange(p1,p2,p3,p4)
+graph_reseller <- grid.arrange(p1,p2,p3,p4)
+graph_reseller
 
 querytotal <- 
   "WITH FactSales(ProductID,OrderDateKey,OrderQty) AS (
@@ -196,8 +204,10 @@ DateRange([Date]) AS (
 	UNION ALL
 	SELECT DATEADD( m , 1 , [Date]) AS [Date]
 	FROM DateRange
-	WHERE [Date] < (SELECT NewestDate
-					FROM MinMaxDate)		
+	WHERE YEAR([Date]) < (SELECT YEAR(NewestDate)
+						  FROM MinMaxDate)	
+		  OR MONTH([Date]) < (SELECT MONTH(NewestDate)
+						  FROM MinMaxDate)		
 ),
 FactorTable(Subcat,YearMonth,[Year],[Month],MonthNumber) AS (
 	SELECT c.Subcat,CAST((YEAR([Date])*100+MONTH([Date])) AS CHAR),YEAR([Date]),MONTH([Date]),
@@ -209,20 +219,21 @@ ExtendedOrderQtyPerMonth(Subcat,YearMonth,[Year],[Month],MonthNumber,OrderQty) A
 	FROM FactorTable ft LEFT JOIN OrderQtyPerMonth oqpm ON 
 	ft.Subcat = oqpm.Subcat AND ft.[Year] = oqpm.[Year] AND ft.[Month] = oqpm.[Month] 
 )
-SELECT dpc.EnglishProductCategoryName, dps.EnglishProductSubcategoryName, 
+SELECT dpc.SpanishProductCategoryName, dps.SpanishProductSubcategoryName, 
 	   eoqpm.YearMonth, eoqpm.[Year],eoqpm.[Month],eoqpm.MonthNumber,eoqpm.OrderQty
 FROM ExtendedOrderQtyPerMonth eoqpm, AdventureWorksDW2019.dbo.DimProductSubcategory dps, AdventureWorksDW2019.dbo.DimProductCategory dpc 
 WHERE eoqpm.Subcat = dps.ProductSubcategoryKey AND dps.ProductCategoryKey = dpc.ProductCategoryKey "
 
-df <- dbGetQuery(on,querytotal) %>% 
-  mutate(EnglishProductCategoryName = as.factor(EnglishProductCategoryName),
-         EnglishProductSubcategoryName = as.factor(EnglishProductSubcategoryName))
+df_total <- dbGetQuery(on,querytotal) %>% 
+  mutate(SpanishProductCategoryName = as.factor(SpanishProductCategoryName),
+         SpanishProductSubcategoryName = as.factor(SpanishProductSubcategoryName))
 
 
-ds <- split(df,f=df$EnglishProductCategoryName)
-p1 <- ggplot(ds$Accessories,aes(x = YearMonth)) + 
-  geom_line(aes(y = OrderQty, color = EnglishProductSubcategoryName, group = EnglishProductSubcategoryName)) + 
-  facet_wrap(vars(EnglishProductCategoryName), ncol=1) +
+ds_total <- split(df_total,f=df_total$SpanishProductCategoryName)
+p1 <- ggplot(ds_total$Accesorio,aes(x = YearMonth)) + 
+  geom_line(aes(y = OrderQty, color = SpanishProductSubcategoryName, group = SpanishProductSubcategoryName),
+            linewidth = 1.1) + 
+  facet_wrap(vars(SpanishProductCategoryName), ncol=1) +
   theme(axis.text.x = element_text(angle = 90,
                                    vjust = 0.5,
                                    hjust = 1,
@@ -236,8 +247,9 @@ p1 <- ggplot(ds$Accessories,aes(x = YearMonth)) +
   xlab("Periodo (Año - Mes)") +
   ylab("Cantidad Ordenada")
 
-p2 <- p1 %+% ds$Bikes
-p3 <- p1 %+% ds$Clothing
-p4 <- p1 %+% ds$Components
+p2 <- p1 %+% ds_total$Bicicleta
+p3 <- p1 %+% ds_total$Prenda
+p4 <- p1 %+% ds_total$Componente
 
-grid.arrange(p1,p2,p3,p4)
+graph_total <- grid.arrange(p1,p2,p3,p4)
+graph_total
