@@ -23,7 +23,7 @@ OrderQtyTable(ProductID,[Year],Subcat,Purchased,OrderQty) AS (--Podría haber us
 		  fis.OrderDateKey = dd.DateKey AND
 		  dd.CalendarYear IN (2012,2013) --Los últimos dos años completos, ver la consulta de rangos de fechas
 	GROUP BY fis.ProductKey, dd.CalendarYear, dp.ProductSubcategoryKey
-	UNION
+	UNION ALL
 	SELECT fis.ProductKey, dd.CalendarYear, dp.ProductSubcategoryKey,
 	'NO',SUM(fis.OrderQuantity) AS OrderQty
 	FROM AdventureWorksDW2019.dbo.FactInternetSales fis, 
@@ -39,7 +39,7 @@ OrderQtyTable(ProductID,[Year],Subcat,Purchased,OrderQty) AS (--Podría haber us
 		  fis.OrderDateKey = dd.DateKey AND
 		  dd.CalendarYear IN (2012,2013)  
 	GROUP BY fis.ProductKey, dd.CalendarYear, dp.ProductSubcategoryKey
-	UNION 
+	UNION ALL
 	SELECT frs.ProductKey, dd.CalendarYear, dp.ProductSubcategoryKey,
 	'YES',SUM(frs.OrderQuantity) AS OrderQty
 	FROM AdventureWorksDW2019.dbo.FactResellerSales frs, 
@@ -55,7 +55,7 @@ OrderQtyTable(ProductID,[Year],Subcat,Purchased,OrderQty) AS (--Podría haber us
 		  frs.OrderDateKey = dd.DateKey AND
 		  dd.CalendarYear IN (2012,2013) 
 	GROUP BY frs.ProductKey, dd.CalendarYear, dp.ProductSubcategoryKey
-	UNION
+	UNION ALL
 	SELECT frs.ProductKey, dd.CalendarYear, dp.ProductSubcategoryKey,
 	'NO',SUM(frs.OrderQuantity) AS OrderQty
 	FROM AdventureWorksDW2019.dbo.FactResellerSales frs, 

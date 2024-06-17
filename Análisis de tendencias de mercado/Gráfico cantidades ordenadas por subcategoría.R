@@ -97,8 +97,12 @@ p1 <- ggplot(ds_internet$Accesorio,aes(x = YearMonth)) +
 p2 <- p1 %+% ds_internet$Bicicleta
 p3 <- p1 %+% ds_internet$Prenda
 
-graph_internet <- grid.arrange(p1,p2,p3)
+graph_internet <- grid.arrange(p1,p2,p3, ncol = 1)
 graph_internet
+
+png(filename = "Cantidad ordenada internet.png",width = 600, height = 750, units = "px")
+grid.arrange(p1,p2,p3, ncol = 1)
+dev.off()
 
 queryreseller <- 
   "WITH OrderQtyPerMonth([Year],[Month],Subcat,OrderQty) AS(
@@ -170,8 +174,12 @@ p2 <- p1 %+% ds_reseller$Bicicleta
 p3 <- p1 %+% ds_reseller$Prenda
 p4 <- p1 %+% ds_reseller$Componente
 
-graph_reseller <- grid.arrange(p1,p2,p3,p4)
+graph_reseller <- grid.arrange(p1,p2,p3,p4, ncol = 1)
 graph_reseller
+
+png(filename = "Cantidad ordenada reventa.png",width = 600, height = 1000, units = "px")
+grid.arrange(p1,p2,p3,p4, ncol = 1)
+dev.off()
 
 querytotal <- 
   "WITH FactSales(ProductID,OrderDateKey,OrderQty) AS (
@@ -251,5 +259,9 @@ p2 <- p1 %+% ds_total$Bicicleta
 p3 <- p1 %+% ds_total$Prenda
 p4 <- p1 %+% ds_total$Componente
 
-graph_total <- grid.arrange(p1,p2,p3,p4)
+graph_total <- grid.arrange(p1,p2,p3,p4, ncol = 1)
 graph_total
+
+png(filename = "Cantidad ordenada total.png",width = 600, height = 1000, units = "px")
+grid.arrange(p1,p2,p3,p4, ncol = 1)
+dev.off()

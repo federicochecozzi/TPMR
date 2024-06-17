@@ -83,6 +83,8 @@ table_internet <- df_internet %>%
 
 table_internet
 
+gtsave(table_internet,"Tendencia producto internet.png", vwidth = 675, vheight = 2000)
+
 queryreseller <-
   "WITH FactSales(ProductID,OrderDateKey,OrderQty) AS (
 	SELECT frs.ProductKey,frs.OrderDateKey, frs.OrderQuantity
@@ -156,6 +158,8 @@ table_reseller <- df_reseller %>%
   )
 
 table_reseller
+
+gtsave(table_reseller,"Tendencia producto reventa.png", vwidth = 675, vheight = 2000)
 
 querytotal <-
   "WITH FactSales(ProductID,OrderDateKey,OrderQty) AS (
@@ -233,3 +237,5 @@ table_total <- df_total %>%
   )
 
 table_total
+
+gtsave(table_total,"Tendencia producto total.png", vwidth = 675, vheight = 2000)

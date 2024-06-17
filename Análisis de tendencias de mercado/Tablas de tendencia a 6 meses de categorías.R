@@ -60,7 +60,7 @@ SixMonthTrendOrderQty(Category,[Year],[Month],MonthNumber,OrderQty,Trend) AS (
 	SELECT Category,[Year],[Month],MonthNumber,OrderQty,(6*sumxy-sumx*sumy)/(6.0*sumxx-sumx*sumx)
 	FROM SumOrderQtyTable
 )
-SELECT t.Category, dp.SpanishProductCategoryName AS [Español], dp.EnglishProductCategoryName AS [Inglés], 
+SELECT t.Category, dpc.SpanishProductCategoryName AS [Español], dpc.EnglishProductCategoryName AS [Inglés], 
 t.Trend AS [β]
 FROM SixMonthTrendOrderQty t, AdventureWorksDW2019.dbo.DimProductCategory dpc 
 WHERE t.Category = dpc.ProductCategoryKey AND [Year] = 2013 AND [Month] = 11
@@ -81,6 +81,8 @@ table_internet <- df_internet %>%
   )
 
 table_internet
+
+gtsave(table_internet,"Tendencia categoría internet.png")
 
 queryreseller <-
   "WITH FactSales(Category,OrderDateKey,OrderQty) AS (
@@ -133,7 +135,7 @@ SixMonthTrendOrderQty(Category,[Year],[Month],MonthNumber,OrderQty,Trend) AS (
 	SELECT Category,[Year],[Month],MonthNumber,OrderQty,(6*sumxy-sumx*sumy)/(6.0*sumxx-sumx*sumx)
 	FROM SumOrderQtyTable
 )
-SELECT t.Category, dp.SpanishProductCategoryName AS [Español], dp.EnglishProductCategoryName AS [Inglés], 
+SELECT t.Category, dpc.SpanishProductCategoryName AS [Español], dpc.EnglishProductCategoryName AS [Inglés], 
 t.Trend AS [β]
 FROM SixMonthTrendOrderQty t, AdventureWorksDW2019.dbo.DimProductCategory dpc 
 WHERE t.Category = dpc.ProductCategoryKey AND [Year] = 2013 AND [Month] = 11
@@ -154,6 +156,8 @@ table_reseller <- df_reseller %>%
   )
 
 table_reseller
+
+gtsave(table_reseller,"Tendencia categoría reventa.png")
 
 querytotal <-
   "WITH FactSales(Category,OrderDateKey,OrderQty) AS (
@@ -211,7 +215,7 @@ SixMonthTrendOrderQty(Category,[Year],[Month],MonthNumber,OrderQty,Trend) AS (
 	SELECT Category,[Year],[Month],MonthNumber,OrderQty,(6*sumxy-sumx*sumy)/(6.0*sumxx-sumx*sumx)
 	FROM SumOrderQtyTable
 )
-SELECT t.Category, dp.SpanishProductCategoryName AS [Español], dp.EnglishProductCategoryName AS [Inglés], 
+SELECT t.Category, dpc.SpanishProductCategoryName AS [Español], dpc.EnglishProductCategoryName AS [Inglés], 
 t.Trend AS [β]
 FROM SixMonthTrendOrderQty t, AdventureWorksDW2019.dbo.DimProductCategory dpc 
 WHERE t.Category = dpc.ProductCategoryKey AND [Year] = 2013 AND [Month] = 11
@@ -232,3 +236,5 @@ table_total <- df_total %>%
   )
 
 table_total
+
+gtsave(table_total,"Tendencia categoría total.png")
