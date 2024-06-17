@@ -1,5 +1,16 @@
---Por internet
-WITH FactSales(Subcategory,OrderDateKey,OrderQty,Price) AS (
+library(odbc)
+library(DBI)
+library(gt)
+
+on <- dbConnect(odbc(),
+                Driver = "SQL Server",
+                Server = "157.92.26.17,1443;",
+                Database = "AdventureWorksDW2019",
+                uid = "Alumno",
+                pwd = "mrcd2023")
+
+queryinternet <-
+  "WITH FactSales(Subcategory,OrderDateKey,OrderQty,Price) AS (
 	SELECT dps.ProductSubcategoryKey,fis.OrderDateKey, fis.OrderQuantity,fis.UnitPrice
 	FROM AdventureWorksDW2019.dbo.FactInternetSales fis, AdventureWorksDW2019.dbo.DimProduct dp, 
 		 AdventureWorksDW2019.dbo.DimProductSubcategory dps
@@ -34,13 +45,37 @@ PivotedElasticityTable(Subcategory,Elasticity_2010,Elasticity_2011,Elasticity_20
 		FOR [Year] IN ([2010],[2011],[2012],[2013],[2014])
 	) AS PivotTable
 )
-SELECT pet.Subcategory,dps.EnglishProductSubcategoryName, pet.Elasticity_2011, pet.Elasticity_2012, pet.Elasticity_2013
+SELECT pet.Subcategory AS SubcategoryID,
+dps.SpanishProductSubcategoryName AS [Español], dps.EnglishProductSubcategoryName AS [Inglés],  
+pet.Elasticity_2011 AS [2011], pet.Elasticity_2012 AS [2012], pet.Elasticity_2013 AS [2013]
 FROM PivotedElasticityTable pet, AdventureWorksDW2019.dbo.DimProductSubcategory dps 
 WHERE pet.Subcategory = dps.ProductSubcategoryKey 
-ORDER BY Subcategory
+ORDER BY Subcategory"
 
---Reventa
-WITH FactSales(Subcategory,OrderDateKey,OrderQty,Price) AS (
+df_internet <- dbGetQuery(on,queryinternet) 
+
+table_internet <- df_internet %>% 
+  gt(rowname_col = "Subcategory") %>%  
+  tab_stubhead(label = "ProductSubcategoryID") %>%
+  tab_header(
+    title = "Elasticidad de demanda de 2011 a 2013",
+    subtitle = "En base a la demanda mensual de cada subcategoría, vendidos por internet"
+  ) %>%
+  tab_spanner(
+    label = "Nombre Subcategoría",
+    columns = c("Español","Inglés")
+  ) %>%
+  tab_spanner(
+    label = html("E<sub>d</sub>"),
+    columns = c("2011","2012","2013")
+  )
+
+table_internet
+
+gtsave(table_internet,"Elasticidad demanda por subcategoría internet.png", vwidth = 675, vheight = 2000)
+
+queryreseller <-
+  "WITH FactSales(Subcategory,OrderDateKey,OrderQty,Price) AS (
 	SELECT dps.ProductSubcategoryKey,frs.OrderDateKey, frs.OrderQuantity,frs.UnitPrice
 	FROM AdventureWorksDW2019.dbo.FactResellerSales frs, AdventureWorksDW2019.dbo.DimProduct dp, 
 		 AdventureWorksDW2019.dbo.DimProductSubcategory dps
@@ -75,18 +110,42 @@ PivotedElasticityTable(Subcategory,Elasticity_2010,Elasticity_2011,Elasticity_20
 		FOR [Year] IN ([2010],[2011],[2012],[2013],[2014])
 	) AS PivotTable
 )
-SELECT pet.Subcategory,dps.EnglishProductSubcategoryName, pet.Elasticity_2011, pet.Elasticity_2012, pet.Elasticity_2013
+SELECT pet.Subcategory AS SubcategoryID,
+dps.SpanishProductSubcategoryName AS [Español], dps.EnglishProductSubcategoryName AS [Inglés],  
+pet.Elasticity_2011 AS [2011], pet.Elasticity_2012 AS [2012], pet.Elasticity_2013 AS [2013]
 FROM PivotedElasticityTable pet, AdventureWorksDW2019.dbo.DimProductSubcategory dps 
 WHERE pet.Subcategory = dps.ProductSubcategoryKey 
-ORDER BY Subcategory
+ORDER BY Subcategory"
 
---Total
-WITH FactSales(Subcategory,OrderDateKey,OrderQty,Price) AS (
-	SELECT dps.ProductSubcategoryKey,fis.OrderDateKey, fis.OrderQuantity,fis.UnitPrice
+df_reseller <- dbGetQuery(on,queryreseller) 
+
+table_reseller <- df_reseller %>% 
+  gt(rowname_col = "Subcategory") %>%  
+  tab_stubhead(label = "ProductSubcategoryID") %>%
+  tab_header(
+    title = "Elasticidad de demanda de 2011 a 2013",
+    subtitle = "En base a la demanda mensual de cada subcategoría, reventa"
+  ) %>%
+  tab_spanner(
+    label = "Nombre Subcategoría",
+    columns = c("Español","Inglés")
+  ) %>%
+  tab_spanner(
+    label = html("E<sub>d</sub>"),
+    columns = c("2011","2012","2013")
+  )
+
+table_reseller
+
+gtsave(table_reseller,"Elasticidad demanda por subcategoría reventa.png", vwidth = 675, vheight = 2000)
+
+querytotal <-
+  "WITH FactSales(Subcategory,OrderDateKey,OrderQty,Price) AS (
+  SELECT dps.ProductSubcategoryKey,fis.OrderDateKey, fis.OrderQuantity,fis.UnitPrice
 	FROM AdventureWorksDW2019.dbo.FactInternetSales fis, AdventureWorksDW2019.dbo.DimProduct dp, 
 		 AdventureWorksDW2019.dbo.DimProductSubcategory dps
 	WHERE fis.ProductKey = dp.ProductKey AND dp.ProductSubcategoryKey = dps.ProductSubcategoryKey
-	UNION ALL
+  UNION ALL
 	SELECT dps.ProductSubcategoryKey,frs.OrderDateKey, frs.OrderQuantity,frs.UnitPrice
 	FROM AdventureWorksDW2019.dbo.FactResellerSales frs, AdventureWorksDW2019.dbo.DimProduct dp, 
 		 AdventureWorksDW2019.dbo.DimProductSubcategory dps
@@ -94,7 +153,7 @@ WITH FactSales(Subcategory,OrderDateKey,OrderQty,Price) AS (
 ),
 OrderQtyTable(Subcategory,[Year],[Month],OrderQty,Price) AS(
 	SELECT fs.Subcategory,dd.CalendarYear, dd.MonthNumberOfYear, SUM(fs.OrderQty) AS OrderQty, AVG(fs.Price) AS Price
-	FROM FactSales fs,AdventureWorksDW2019.dbo.DimDate dd 
+	FROM FactSales fs, AdventureWorksDW2019.dbo.DimDate dd 
 	WHERE fs.OrderDateKey = dd.DateKey  
 	GROUP BY Subcategory,dd.CalendarYear, dd.MonthNumberOfYear
 ),
@@ -121,7 +180,31 @@ PivotedElasticityTable(Subcategory,Elasticity_2010,Elasticity_2011,Elasticity_20
 		FOR [Year] IN ([2010],[2011],[2012],[2013],[2014])
 	) AS PivotTable
 )
-SELECT pet.Subcategory,dps.EnglishProductSubcategoryName, pet.Elasticity_2011, pet.Elasticity_2012, pet.Elasticity_2013
+SELECT pet.Subcategory AS SubcategoryID,
+dps.SpanishProductSubcategoryName AS [Español], dps.EnglishProductSubcategoryName AS [Inglés],  
+pet.Elasticity_2011 AS [2011], pet.Elasticity_2012 AS [2012], pet.Elasticity_2013 AS [2013]
 FROM PivotedElasticityTable pet, AdventureWorksDW2019.dbo.DimProductSubcategory dps 
 WHERE pet.Subcategory = dps.ProductSubcategoryKey 
-ORDER BY Subcategory
+ORDER BY Subcategory"
+
+df_total <- dbGetQuery(on,querytotal) 
+
+table_total <- df_total %>% 
+  gt(rowname_col = "Subcategory") %>%  
+  tab_stubhead(label = "ProductSubcategoryID") %>%
+  tab_header(
+    title = "Elasticidad de demanda de 2011 a 2013",
+    subtitle = "En base a la demanda mensual de cada subcategoría, ambos canales"
+  ) %>%
+  tab_spanner(
+    label = "Nombre Subcategoría",
+    columns = c("Español","Inglés")
+  ) %>%
+  tab_spanner(
+    label = html("E<sub>d</sub>"),
+    columns = c("2011","2012","2013")
+  )
+
+table_total
+
+gtsave(table_total,"Elasticidad demanda por subcategoría total.png", vwidth = 675, vheight = 2000)
