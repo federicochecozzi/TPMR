@@ -70,9 +70,16 @@ df_internet <- dbGetQuery(on,queryinternet)
 
 table_internet <- df_internet %>% 
   gt() %>%  
-  tab_header(
-    title = "Tendencia cantidad ordenada en los últimos 6 meses",
-    subtitle = "Categorías con mayor tasa de crecimiento, vendidos por internet"
+  #tab_header(
+  #  title = "Tendencia cantidad ordenada en los últimos 6 meses",
+  #  subtitle = "Categorías con mayor tasa de crecimiento, vendidos por internet"
+  #) %>% 
+  tab_options(
+    column_labels.font.size = px(8),
+    column_labels.font.weight = 'bold',
+    table.font.size = px(7),
+    data_row.padding = px(0),
+    table.width = px(400)
   )
 
 table_internet
@@ -139,9 +146,16 @@ df_reseller <- dbGetQuery(on,queryreseller)
 
 table_reseller <- df_reseller %>% 
   gt() %>%  
-  tab_header(
-    title = "Tendencia cantidad ordenada en los últimos 6 meses",
-    subtitle = "Categorías con mayor tasa de crecimiento, reventa"
+  #tab_header(
+  #  title = "Tendencia cantidad ordenada en los últimos 6 meses",
+  #  subtitle = "Categorías con mayor tasa de crecimiento, reventa"
+  #) %>% 
+  tab_options(
+    column_labels.font.size = px(8),
+    column_labels.font.weight = 'bold',
+    table.font.size = px(7),
+    data_row.padding = px(0),
+    table.width = px(400)
   )
 
 table_reseller
@@ -213,9 +227,16 @@ df_total <- dbGetQuery(on,querytotal)
 
 table_total <- df_total %>% 
   gt() %>%  
-  tab_header(
-    title = "Tendencia cantidad ordenada en los últimos 6 meses",
-    subtitle = "Categorías con mayor tasa de crecimiento, ambos canales"
+  #tab_header(
+  #  title = "Tendencia cantidad ordenada en los últimos 6 meses",
+  #  subtitle = "Categorías con mayor tasa de crecimiento, ambos canales"
+  #) %>% 
+  tab_options(
+    column_labels.font.size = px(8),
+    column_labels.font.weight = 'bold',
+    table.font.size = px(7),
+    data_row.padding = px(0),
+    table.width = px(400)
   )
 
 table_total

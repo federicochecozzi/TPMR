@@ -56,13 +56,20 @@ df_internet <- dbGetQuery(on,queryinternet)
 
 table_internet <- df_internet %>% 
   gt() %>% 
-  tab_header(
-    title = "Elasticidad de demanda de 2011 a 2013",
-    subtitle = "En base a la demanda mensual de cada subcategoría, vendidos por internet"
-  ) %>%
+  #tab_header(
+  #  title = "Elasticidad de demanda de 2011 a 2013",
+  #  subtitle = "En base a la demanda mensual de cada subcategoría, vendidos por internet"
+  #) %>%
   tab_spanner(
     label = html("E<sub>d</sub>"),
     columns = c("2011","2012","2013")
+  ) %>% 
+  tab_options(
+    column_labels.font.size = px(8),
+    column_labels.font.weight = 'bold',
+    table.font.size = px(7),
+    data_row.padding = px(0),
+    table.width = px(400)
   )
 
 table_internet
@@ -115,13 +122,20 @@ df_reseller <- dbGetQuery(on,queryreseller)
 
 table_reseller <- df_reseller %>% 
   gt() %>% 
-  tab_header(
-    title = "Elasticidad de demanda de 2011 a 2013",
-    subtitle = "En base a la demanda mensual de cada subcategoría, reventa"
-  ) %>%
+  #tab_header(
+  #  title = "Elasticidad de demanda de 2011 a 2013",
+  #  subtitle = "En base a la demanda mensual de cada subcategoría, reventa"
+  #) %>%
   tab_spanner(
     label = html("E<sub>d</sub>"),
     columns = c("2011","2012","2013")
+  ) %>% 
+  tab_options(
+    column_labels.font.size = px(8),
+    column_labels.font.weight = 'bold',
+    table.font.size = px(7),
+    data_row.padding = px(0),
+    table.width = px(400)
   )
 
 table_reseller
@@ -179,13 +193,20 @@ df_total <- dbGetQuery(on,querytotal)
 
 table_total <- df_total %>% 
   gt() %>% 
-  tab_header(
-    title = "Elasticidad de demanda de 2011 a 2013",
-    subtitle = "En base a la demanda mensual de cada subcategoría, ambos canales"
-  ) %>%
+  #tab_header(
+  #  title = "Elasticidad de demanda de 2011 a 2013",
+  #  subtitle = "En base a la demanda mensual de cada subcategoría, ambos canales"
+  #) %>%
   tab_spanner(
     label = html("E<sub>d</sub>"),
     columns = c("2011","2012","2013")
+  ) %>% 
+  tab_options(
+    column_labels.font.size = px(8),
+    column_labels.font.weight = 'bold',
+    table.font.size = px(7),
+    data_row.padding = px(0),
+    table.width = px(400)
   )
 
 table_total
