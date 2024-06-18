@@ -742,7 +742,7 @@ q_ganancias_por_productos <- "
     ORDER BY cat_producto,subcat_producto
     "
 
-### Esto se puede mostrar como tabla directamente.
+
 ganancias_por_productos <- dbGetQuery(conn = on,q_ganancias_por_productos)
 
 gt_margen_products <- gt::gt(ganancias_por_productos) %>% 
@@ -753,8 +753,6 @@ gt_margen_products <- gt::gt(ganancias_por_productos) %>%
     data_row.padding = gt::px(0),
     table.width = gt::px(400)
   )
-
-
 
 gt::gtsave(gt_margen_products,
            'C:/Users/malen/Dropbox/MAESTRIA_CDD/MRCD/TPMR/Análisis de rentabilidad/tabla1_margen_productos.png'

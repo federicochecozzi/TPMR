@@ -1,11 +1,11 @@
 WITH 
 	ventas_reseller(trim_anio,
-	               salesterritorygroup,
+	               salesterritoryregion,
 	                salesamount,OrderQuantity,totalProductCost,
                   canal, gananciaTotal) AS
                       (SELECT 
                             concat(CalendarYear,'_',CalendarQuarter) as trim_anio
-                            ,salesterritorygroup
+                            ,salesterritoryregion
                             ,salesamount
                             ,OrderQuantity
                             ,totalProductCost
@@ -21,12 +21,12 @@ WITH
                       ),
                       
     ventas_online(trim_anio,
-	                    salesterritorygroup,
+	                    salesterritoryregion,
 	                    salesamount,OrderQuantity,totalProductCost,
                       canal, gananciaTotal) AS
                       (SELECT 
                             concat(CalendarYear,'_',CalendarQuarter) as trim_anio
-                            ,salesterritorygroup
+                            ,salesterritoryregion
                             ,salesamount
                             ,OrderQuantity
                             ,totalProductCost
@@ -40,15 +40,15 @@ WITH
                       WHERE s.orderDateKey >= 20110101 and s.orderDateKey <= 20131231
                       ),
                        
-    Sales(trim_anio,salesterritorygroup,
+    Sales(trim_anio,salesterritoryregion,
 	            salesamount,OrderQuantity,totalProductCost,
               canal, gananciaTotal) AS
                       (SELECT * FROM ventas_online
                       UNION ALL
                       SELECT * FROM ventas_reseller),
                       
-    RegionFull(salesterritorygroup) AS
-                      (SELECT DISTINCT salesterritorygroup
+    RegionFull(salesterritoryregion) AS
+                      (SELECT DISTINCT salesterritoryregion
                       FROM Sales),
 
     AnioFull(trim_anio) AS
@@ -62,10 +62,15 @@ WITH
                     
     Agrupado1 AS
       (SELECT  ISNULL(CAST(m.trim_anio AS CHAR),'Total') AS trim_anio
-            ,CASE WHEN r.salesterritorygroup = 'Europe' THEN 'Europa'
-                  WHEN r.salesterritorygroup = 'North America' THEN 'América del Norte'
-                  WHEN r.salesterritorygroup = 'Pacific' THEN 'Pacífico' 
-                  ELSE 'Total' END AS region
+            ,CASE WHEN r.salesterritoryregion = 'France' THEN 'Francia'
+                  WHEN r.salesterritoryregion = 'Germany' THEN 'Alemania'
+                  WHEN r.salesterritoryregion = 'Northeast' THEN 'EEUU - NE'
+                  WHEN r.salesterritoryregion = 'Northwest' THEN 'EEUU - NO'
+                  WHEN r.salesterritoryregion = 'Southwest' THEN 'EEUU - SO'
+                  WHEN r.salesterritoryregion = 'Southeast' THEN 'EEUU - SE'
+                  WHEN r.salesterritoryregion = 'Central' THEN 'EEUU - Centro'
+                  WHEN r.salesterritoryregion = 'United Kingdom' THEN 'Reino Unido'
+                  ELSE r.salesterritoryregion END as region
             ,ISNULL(cf.canal,'Total') as canal
             ,ISNULL(sum(cast(salesAmount as float)/1000000),0) as ingreso_ventas_canal
             ,ISNULL(sum(gananciaTotal/1000),0) as ganancia_canal
@@ -78,8 +83,8 @@ WITH
     CROSS JOIN canalfull cf
     CROSS JOIN regionfull r
     LEFT JOIN sales AS c 
-    ON m.trim_anio = c.trim_anio and cf.canal = c.canal and r.SalesTerritoryGroup = c.SalesTerritoryGroup
-    GROUP BY ROLLUP(m.trim_anio,r.SalesTerritoryGroup,cf.canal)
+    ON m.trim_anio = c.trim_anio and cf.canal = c.canal and r.SalesTerritoryregion = c.SalesTerritoryregion
+    GROUP BY ROLLUP(m.trim_anio,r.SalesTerritoryregion,cf.canal)
     )
     
     

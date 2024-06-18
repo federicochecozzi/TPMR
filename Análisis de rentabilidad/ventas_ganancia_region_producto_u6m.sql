@@ -1,11 +1,8 @@
-WITH 
+ WITH 
 	ventas_reseller AS
                       (SELECT 
                             
-                            CASE 
-                              WHEN salesterritorygroup = 'Europe' THEN 'Europa'
-                              WHEN salesterritorygroup = 'North America' THEN 'América del Norte'
-                              ELSE 'Pacífico' END as salesterritorygroup 
+                            salesterritoryregion 
                             ,spanishproductcategoryname as cat_producto
                             ,salesamount
                             ,totalProductCost
@@ -28,10 +25,7 @@ WITH
                       
     ventas_online AS
                       (SELECT 
-                             CASE 
-                              WHEN salesterritorygroup = 'Europe' THEN 'Europa'
-                              WHEN salesterritorygroup = 'North America' THEN 'América del Norte'
-                              ELSE 'Pacífico' END as salesterritorygroup
+                             salesterritoryregion
                             ,spanishproductcategoryname as cat_producto
                             ,salesamount
                             ,totalProductCost
@@ -60,8 +54,8 @@ WITH
                       (SELECT DISTINCT cat_producto
                       FROM Sales),
                       
-    RegionFull(salesterritorygroup) AS
-                      (SELECT DISTINCT salesterritorygroup
+    RegionFull(salesterritoryregion) AS
+                      (SELECT DISTINCT salesterritoryregion
                       FROM Sales),
        
     CanalFull(canal) AS
@@ -69,7 +63,15 @@ WITH
                     
 
       SELECT  
-            r.SalesTerritoryGroup AS region
+            CASE WHEN r.salesterritoryregion = 'France' THEN 'Francia'
+                  WHEN r.salesterritoryregion = 'Germany' THEN 'Alemania'
+                  WHEN r.salesterritoryregion = 'Northeast' THEN 'EEUU - NE'
+                  WHEN r.salesterritoryregion = 'Northwest' THEN 'EEUU - NO'
+                  WHEN r.salesterritoryregion = 'Southwest' THEN 'EEUU - SO'
+                  WHEN r.salesterritoryregion = 'Southeast' THEN 'EEUU - SE'
+                  WHEN r.salesterritoryregion = 'Central' THEN 'EEUU - Centro'
+                  WHEN r.salesterritoryregion = 'United Kingdom' THEN 'Reino Unido'
+                  ELSE r.salesterritoryregion END as region
             ,cp.cat_producto 
             ,cf.canal
             ,ISNULL(sum(cast(salesAmount as float)/1000000),0) as ingreso_ventas_canal
@@ -84,8 +86,8 @@ WITH
     LEFT JOIN sales AS s 
     ON
        cf.canal = s.canal and 
-       r.SalesTerritoryGroup = s.SalesTerritoryGroup and
+       r.SalesTerritoryRegion = s.SalesTerritoryRegion and
        cp.cat_producto = s.cat_producto
-    GROUP BY r.SalesTerritoryGroup
+    GROUP BY r.SalesTerritoryRegion
             ,cp.cat_producto 
             ,cf.canal
