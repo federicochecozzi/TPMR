@@ -1,6 +1,7 @@
 library(odbc)
 library(DBI)
 library(gt)
+library(tidyverse)
 
 on <- dbConnect(odbc(),
                 Driver = "SQL Server",
@@ -60,8 +61,7 @@ SixMonthTrendOrderQty(Category,[Year],[Month],MonthNumber,OrderQty,Trend) AS (
 	SELECT Category,[Year],[Month],MonthNumber,OrderQty,(6*sumxy-sumx*sumy)/(6.0*sumxx-sumx*sumx)
 	FROM SumOrderQtyTable
 )
-SELECT t.Category, dpc.SpanishProductCategoryName AS [Español], dpc.EnglishProductCategoryName AS [Inglés], 
-t.Trend AS [β]
+SELECT dpc.SpanishProductCategoryName AS [Nombre categoría], ROUND(t.Trend,2) AS [β]
 FROM SixMonthTrendOrderQty t, AdventureWorksDW2019.dbo.DimProductCategory dpc 
 WHERE t.Category = dpc.ProductCategoryKey AND [Year] = 2013 AND [Month] = 11
 ORDER BY Trend DESC"
@@ -69,15 +69,10 @@ ORDER BY Trend DESC"
 df_internet <- dbGetQuery(on,queryinternet) 
 
 table_internet <- df_internet %>% 
-  gt(rowname_col = "Category") %>%  
-  tab_stubhead(label = "ProductCategoryID") %>%
+  gt() %>%  
   tab_header(
     title = "Tendencia cantidad ordenada en los últimos 6 meses",
     subtitle = "Categorías con mayor tasa de crecimiento, vendidos por internet"
-  ) %>%
-  tab_spanner(
-    label = "Nombre Categoría",
-    columns = c("Español","Inglés")
   )
 
 table_internet
@@ -135,8 +130,7 @@ SixMonthTrendOrderQty(Category,[Year],[Month],MonthNumber,OrderQty,Trend) AS (
 	SELECT Category,[Year],[Month],MonthNumber,OrderQty,(6*sumxy-sumx*sumy)/(6.0*sumxx-sumx*sumx)
 	FROM SumOrderQtyTable
 )
-SELECT t.Category, dpc.SpanishProductCategoryName AS [Español], dpc.EnglishProductCategoryName AS [Inglés], 
-t.Trend AS [β]
+SELECT dpc.SpanishProductCategoryName AS [Nombre categoría], ROUND(t.Trend,2) AS [β]
 FROM SixMonthTrendOrderQty t, AdventureWorksDW2019.dbo.DimProductCategory dpc 
 WHERE t.Category = dpc.ProductCategoryKey AND [Year] = 2013 AND [Month] = 11
 ORDER BY Trend DESC"
@@ -144,15 +138,10 @@ ORDER BY Trend DESC"
 df_reseller <- dbGetQuery(on,queryreseller) 
 
 table_reseller <- df_reseller %>% 
-  gt(rowname_col = "Category") %>%  
-  tab_stubhead(label = "ProductCategoryID") %>%
+  gt() %>%  
   tab_header(
     title = "Tendencia cantidad ordenada en los últimos 6 meses",
     subtitle = "Categorías con mayor tasa de crecimiento, reventa"
-  ) %>%
-  tab_spanner(
-    label = "Nombre Categoría",
-    columns = c("Español","Inglés")
   )
 
 table_reseller
@@ -215,8 +204,7 @@ SixMonthTrendOrderQty(Category,[Year],[Month],MonthNumber,OrderQty,Trend) AS (
 	SELECT Category,[Year],[Month],MonthNumber,OrderQty,(6*sumxy-sumx*sumy)/(6.0*sumxx-sumx*sumx)
 	FROM SumOrderQtyTable
 )
-SELECT t.Category, dpc.SpanishProductCategoryName AS [Español], dpc.EnglishProductCategoryName AS [Inglés], 
-t.Trend AS [β]
+SELECT dpc.SpanishProductCategoryName AS [Nombre categoría], ROUND(t.Trend,2) AS [β]
 FROM SixMonthTrendOrderQty t, AdventureWorksDW2019.dbo.DimProductCategory dpc 
 WHERE t.Category = dpc.ProductCategoryKey AND [Year] = 2013 AND [Month] = 11
 ORDER BY Trend DESC"
@@ -224,15 +212,10 @@ ORDER BY Trend DESC"
 df_total <- dbGetQuery(on,querytotal) 
 
 table_total <- df_total %>% 
-  gt(rowname_col = "Category") %>%  
-  tab_stubhead(label = "ProductCategoryID") %>%
+  gt() %>%  
   tab_header(
     title = "Tendencia cantidad ordenada en los últimos 6 meses",
     subtitle = "Categorías con mayor tasa de crecimiento, ambos canales"
-  ) %>%
-  tab_spanner(
-    label = "Nombre Categoría",
-    columns = c("Español","Inglés")
   )
 
 table_total

@@ -68,9 +68,9 @@ ExtendedOrderQtyPerYearAndType([Year],Subcat,Purchased,OrderQty) AS (--Aparentem
 	FROM FactorTable ft LEFT JOIN OrderQtyPerYearAndType oq
 	ON ft.[Year] = oq.[Year] AND ft.Subcat = oq.Subcat AND ft.Purchased = oq.Purchased 
 ),
-PivotedOrderQtyPerYearAndType([Year],Subcat,Percentage) AS(
+PivotedOrderQtyPerYearAndType([Year],Subcat,Proportion) AS(
 	SELECT [Year],Subcat,
-		   100.0*[NO]/NULLIF([YES]+[NO],0)
+		   1.0*[NO]/NULLIF([YES]+[NO],0)
 	FROM ExtendedOrderQtyPerYearAndType AS SourceTable
 	PIVOT
 	(
@@ -83,32 +83,22 @@ PivotedOrderQtyPerType(Subcat,[2012],[2013]) AS (
 	FROM PivotedOrderQtyPerYearAndType AS SourceTable
 	PIVOT
 	(
-		MAX(Percentage)
+		MAX(Proportion)
 		FOR [Year] IN ([2012],[2013])
 	) AS PivotTable
 )
-SELECT p.Subcat, dps.SpanishProductSubcategoryName AS [Español], dps.EnglishProductSubcategoryName AS [Inglés],
-[2012],[2013]
+SELECT dps.SpanishProductSubcategoryName AS [Subcategoría],FORMAT([2012],'P2') AS [2012],FORMAT([2013],'P2') AS [2013]
 FROM PivotedOrderQtyPerType p, AdventureWorksDW2019.dbo.DimProductSubcategory dps 
 WHERE p.Subcat = dps.ProductSubcategoryKey"
 
 df_internet <- dbGetQuery(on,queryinternet) 
 
 table_internet <- df_internet %>% 
-  gt(rowname_col = "Subcat") %>%  
-  tab_stubhead(label = "ProductSubcategoryID") %>%
+  gt() %>%  
   tab_header(
-    title = "Proporción de ventas de productos fabricados",
+    title = "Porcentaje de ventas de productos fabricados",
     subtitle = "En aquellas subcategorías donde Adventure Works vende productos de la competencia, internet"
-  ) %>%
-  tab_spanner(
-    label = "Nombre Subcategoría",
-    columns = c("Español","Inglés")
-  ) %>%
-  tab_spanner(
-    label = html("Proporción"),
-    columns = c("2012","2013")
-  )
+  ) 
 
 table_internet
 
@@ -173,9 +163,9 @@ ExtendedOrderQtyPerYearAndType([Year],Subcat,Purchased,OrderQty) AS (--Aparentem
 	FROM FactorTable ft LEFT JOIN OrderQtyPerYearAndType oq
 	ON ft.[Year] = oq.[Year] AND ft.Subcat = oq.Subcat AND ft.Purchased = oq.Purchased 
 ),
-PivotedOrderQtyPerYearAndType([Year],Subcat,Percentage) AS(
+PivotedOrderQtyPerYearAndType([Year],Subcat,Proportion) AS(
 	SELECT [Year],Subcat,
-		   100.0*[NO]/NULLIF([YES]+[NO],0)
+		   1.0*[NO]/NULLIF([YES]+[NO],0)
 	FROM ExtendedOrderQtyPerYearAndType AS SourceTable
 	PIVOT
 	(
@@ -188,32 +178,22 @@ PivotedOrderQtyPerType(Subcat,[2012],[2013]) AS (
 	FROM PivotedOrderQtyPerYearAndType AS SourceTable
 	PIVOT
 	(
-		MAX(Percentage)
+		MAX(Proportion)
 		FOR [Year] IN ([2012],[2013])
 	) AS PivotTable
 )
-SELECT p.Subcat, dps.SpanishProductSubcategoryName AS [Español], dps.EnglishProductSubcategoryName AS [Inglés],
-[2012],[2013]
+SELECT dps.SpanishProductSubcategoryName AS [Subcategoría],FORMAT([2012],'P2') AS [2012],FORMAT([2013],'P2') AS [2013]
 FROM PivotedOrderQtyPerType p, AdventureWorksDW2019.dbo.DimProductSubcategory dps 
 WHERE p.Subcat = dps.ProductSubcategoryKey"
 
 df_reseller <- dbGetQuery(on,queryreseller) 
 
 table_reseller <- df_reseller %>% 
-  gt(rowname_col = "Subcat") %>%  
-  tab_stubhead(label = "ProductSubcategoryID") %>%
+  gt() %>%  
   tab_header(
-    title = "Proporción de ventas de productos fabricados",
+    title = "Porcentaje de ventas de productos fabricados",
     subtitle = "En aquellas subcategorías donde Adventure Works vende productos de la competencia, reventa"
-  ) %>%
-  tab_spanner(
-    label = "Nombre Subcategoría",
-    columns = c("Español","Inglés")
-  ) %>%
-  tab_spanner(
-    label = html("Proporción"),
-    columns = c("2012","2013")
-  )
+  ) 
 
 table_reseller
 
@@ -310,9 +290,9 @@ ExtendedOrderQtyPerYearAndType([Year],Subcat,Purchased,OrderQty) AS (--Aparentem
 	FROM FactorTable ft LEFT JOIN OrderQtyPerYearAndType oq
 	ON ft.[Year] = oq.[Year] AND ft.Subcat = oq.Subcat AND ft.Purchased = oq.Purchased 
 ),
-PivotedOrderQtyPerYearAndType([Year],Subcat,Percentage) AS(
+PivotedOrderQtyPerYearAndType([Year],Subcat,Proportion) AS(
 	SELECT [Year],Subcat,
-		   100.0*[NO]/NULLIF([YES]+[NO],0)
+		   1.0*[NO]/NULLIF([YES]+[NO],0)
 	FROM ExtendedOrderQtyPerYearAndType AS SourceTable
 	PIVOT
 	(
@@ -325,32 +305,22 @@ PivotedOrderQtyPerType(Subcat,[2012],[2013]) AS (
 	FROM PivotedOrderQtyPerYearAndType AS SourceTable
 	PIVOT
 	(
-		MAX(Percentage)
+		MAX(Proportion)
 		FOR [Year] IN ([2012],[2013])
 	) AS PivotTable
 )
-SELECT p.Subcat, dps.SpanishProductSubcategoryName AS [Español], dps.EnglishProductSubcategoryName AS [Inglés],
-[2012],[2013]
+SELECT dps.SpanishProductSubcategoryName AS [Subcategoría],FORMAT([2012],'P2') AS [2012],FORMAT([2013],'P2') AS [2013]
 FROM PivotedOrderQtyPerType p, AdventureWorksDW2019.dbo.DimProductSubcategory dps 
 WHERE p.Subcat = dps.ProductSubcategoryKey"
 
 df_total <- dbGetQuery(on,querytotal) 
 
 table_total <- df_total %>% 
-  gt(rowname_col = "Subcat") %>%  
-  tab_stubhead(label = "ProductSubcategoryID") %>%
+  gt() %>%  
   tab_header(
-    title = "Proporción de ventas de productos fabricados",
+    title = "Porcentaje de ventas de productos fabricados",
     subtitle = "En aquellas subcategorías donde Adventure Works vende productos de la competencia, ambos canales"
-  ) %>%
-  tab_spanner(
-    label = "Nombre Subcategoría",
-    columns = c("Español","Inglés")
-  ) %>%
-  tab_spanner(
-    label = html("Proporción"),
-    columns = c("2012","2013")
-  )
+  ) 
 
 table_total
 

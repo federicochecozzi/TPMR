@@ -1,6 +1,5 @@
 library(odbc)
 library(DBI)
-library(tidyverse)
 
 sort(unique(odbcListDrivers()[[1]]))
 

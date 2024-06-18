@@ -1,5 +1,6 @@
 library(odbc)
 library(DBI)
+library(tidyverse)
 library(gt)
 
 on <- dbConnect(odbc(),
@@ -61,8 +62,8 @@ SixMonthTrendOrderQty(ProductID,[Year],[Month],MonthNumber,OrderQty,Trend) AS (
 	SELECT ProductID,[Year],[Month],MonthNumber,OrderQty,(6*sumxy-sumx*sumy)/(6.0*sumxx-sumx*sumx)
 	FROM SumOrderQtyTable
 )
-SELECT TOP(10) t.ProductID, dp.SpanishProductName AS [Español], dp.EnglishProductName AS [Inglés], 
-t.Trend AS [β]
+SELECT TOP(10) dp.SpanishProductName AS [Español], dp.EnglishProductName AS [Inglés], 
+ROUND(t.Trend,2) AS [β]
 FROM SixMonthTrendOrderQty t, AdventureWorksDW2019.dbo.DimProduct dp 
 WHERE t.ProductID = dp.ProductKey AND [Year] = 2013 AND [Month] = 11
 ORDER BY Trend DESC"
@@ -70,8 +71,7 @@ ORDER BY Trend DESC"
 df_internet <- dbGetQuery(on,queryinternet) 
 
 table_internet <- df_internet %>% 
-  gt(rowname_col = "ProductID") %>%  
-  tab_stubhead(label = "ProductID") %>%
+  gt() %>%  
   tab_header(
     title = "Tendencia cantidad ordenada en los últimos 6 meses",
     subtitle = "10 productos con mayor tasa de crecimiento, vendidos por internet"
@@ -137,17 +137,16 @@ SixMonthTrendOrderQty(ProductID,[Year],[Month],MonthNumber,OrderQty,Trend) AS (
 	SELECT ProductID,[Year],[Month],MonthNumber,OrderQty,(6*sumxy-sumx*sumy)/(6.0*sumxx-sumx*sumx)
 	FROM SumOrderQtyTable
 )
-SELECT TOP(10) t.ProductID, dp.SpanishProductName AS [Español], dp.EnglishProductName AS [Inglés], 
-t.Trend AS [β]
+SELECT TOP(10) dp.SpanishProductName AS [Español], dp.EnglishProductName AS [Inglés], 
+ROUND(t.Trend,2) AS [β]
 FROM SixMonthTrendOrderQty t, AdventureWorksDW2019.dbo.DimProduct dp 
 WHERE t.ProductID = dp.ProductKey AND [Year] = 2013 AND [Month] = 11
 ORDER BY Trend DESC"
 
 df_reseller <- dbGetQuery(on,queryreseller) 
 
-table_reseller <- df_reseller %>% 
-  gt(rowname_col = "ProductID") %>%  
-  tab_stubhead(label = "ProductID") %>%
+table_reseller <- df_reseller %>%
+  gt() %>% 
   tab_header(
     title = "Tendencia cantidad ordenada en los últimos 6 meses",
     subtitle = "10 productos con mayor tasa de crecimiento, reventa"
@@ -216,17 +215,16 @@ SixMonthTrendOrderQty(ProductID,[Year],[Month],MonthNumber,OrderQty,Trend) AS (
 	SELECT ProductID,[Year],[Month],MonthNumber,OrderQty,(6*sumxy-sumx*sumy)/(6.0*sumxx-sumx*sumx)
 	FROM SumOrderQtyTable
 )
-SELECT TOP(10) t.ProductID, dp.SpanishProductName AS [Español], dp.EnglishProductName AS [Inglés], 
-t.Trend AS [β]
+SELECT TOP(10) dp.SpanishProductName AS [Español], dp.EnglishProductName AS [Inglés], 
+ROUND(t.Trend,2) AS [β]
 FROM SixMonthTrendOrderQty t, AdventureWorksDW2019.dbo.DimProduct dp 
 WHERE t.ProductID = dp.ProductKey AND [Year] = 2013 AND [Month] = 11
 ORDER BY Trend DESC"
 
 df_total <- dbGetQuery(on,querytotal) 
 
-table_total <- df_total %>% 
-  gt(rowname_col = "ProductID") %>%  
-  tab_stubhead(label = "ProductID") %>%
+table_total <- df_total %>%
+  gt() %>%
   tab_header(
     title = "Tendencia cantidad ordenada en los últimos 6 meses",
     subtitle = "10 productos con mayor tasa de crecimiento, ambos canales"

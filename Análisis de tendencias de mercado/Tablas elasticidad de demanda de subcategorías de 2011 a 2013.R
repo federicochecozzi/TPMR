@@ -1,6 +1,7 @@
 library(odbc)
 library(DBI)
 library(gt)
+library(tidyverse)
 
 on <- dbConnect(odbc(),
                 Driver = "SQL Server",
@@ -36,7 +37,7 @@ ElasticityTable(Subcategory,[Year],Elasticity) AS (
 	SELECT Subcategory,[Year],(N*sumxy-sumx*sumy)/NULLIF(N*sumxx-sumx*sumx,0)
 	FROM SumOrderQtyTable
 ),
-PivotedElasticityTable(Subcategory,Elasticity_2010,Elasticity_2011,Elasticity_2012,Elasticity_2013,Elasticity_2014) AS (
+PivotedElasticityTable(Subcategory,[2010],[2011],[2012],[2013],[2014]) AS (
 	SELECT Subcategory,[2010],[2011],[2012],[2013],[2014]
 	FROM ElasticityTable AS SourceTable
 	PIVOT
@@ -45,9 +46,8 @@ PivotedElasticityTable(Subcategory,Elasticity_2010,Elasticity_2011,Elasticity_20
 		FOR [Year] IN ([2010],[2011],[2012],[2013],[2014])
 	) AS PivotTable
 )
-SELECT pet.Subcategory AS SubcategoryID,
-dps.SpanishProductSubcategoryName AS [Español], dps.EnglishProductSubcategoryName AS [Inglés],  
-pet.Elasticity_2011 AS [2011], pet.Elasticity_2012 AS [2012], pet.Elasticity_2013 AS [2013]
+SELECT dps.SpanishProductSubcategoryName AS [Subcategoría],ROUND(pet.[2011],2) AS [2011], ROUND(pet.[2012],2) AS [2012], 
+ROUND(pet.[2013],2) AS [2013]
 FROM PivotedElasticityTable pet, AdventureWorksDW2019.dbo.DimProductSubcategory dps 
 WHERE pet.Subcategory = dps.ProductSubcategoryKey 
 ORDER BY Subcategory"
@@ -55,15 +55,10 @@ ORDER BY Subcategory"
 df_internet <- dbGetQuery(on,queryinternet) 
 
 table_internet <- df_internet %>% 
-  gt(rowname_col = "Subcategory") %>%  
-  tab_stubhead(label = "ProductSubcategoryID") %>%
+  gt() %>% 
   tab_header(
     title = "Elasticidad de demanda de 2011 a 2013",
     subtitle = "En base a la demanda mensual de cada subcategoría, vendidos por internet"
-  ) %>%
-  tab_spanner(
-    label = "Nombre Subcategoría",
-    columns = c("Español","Inglés")
   ) %>%
   tab_spanner(
     label = html("E<sub>d</sub>"),
@@ -101,7 +96,7 @@ ElasticityTable(Subcategory,[Year],Elasticity) AS (
 	SELECT Subcategory,[Year],(N*sumxy-sumx*sumy)/NULLIF(N*sumxx-sumx*sumx,0)
 	FROM SumOrderQtyTable
 ),
-PivotedElasticityTable(Subcategory,Elasticity_2010,Elasticity_2011,Elasticity_2012,Elasticity_2013,Elasticity_2014) AS (
+PivotedElasticityTable(Subcategory,[2010],[2011],[2012],[2013],[2014]) AS (
 	SELECT Subcategory,[2010],[2011],[2012],[2013],[2014]
 	FROM ElasticityTable AS SourceTable
 	PIVOT
@@ -110,9 +105,8 @@ PivotedElasticityTable(Subcategory,Elasticity_2010,Elasticity_2011,Elasticity_20
 		FOR [Year] IN ([2010],[2011],[2012],[2013],[2014])
 	) AS PivotTable
 )
-SELECT pet.Subcategory AS SubcategoryID,
-dps.SpanishProductSubcategoryName AS [Español], dps.EnglishProductSubcategoryName AS [Inglés],  
-pet.Elasticity_2011 AS [2011], pet.Elasticity_2012 AS [2012], pet.Elasticity_2013 AS [2013]
+SELECT dps.SpanishProductSubcategoryName AS [Subcategoría],ROUND(pet.[2011],2) AS [2011], ROUND(pet.[2012],2) AS [2012], 
+ROUND(pet.[2013],2) AS [2013]
 FROM PivotedElasticityTable pet, AdventureWorksDW2019.dbo.DimProductSubcategory dps 
 WHERE pet.Subcategory = dps.ProductSubcategoryKey 
 ORDER BY Subcategory"
@@ -120,15 +114,10 @@ ORDER BY Subcategory"
 df_reseller <- dbGetQuery(on,queryreseller) 
 
 table_reseller <- df_reseller %>% 
-  gt(rowname_col = "Subcategory") %>%  
-  tab_stubhead(label = "ProductSubcategoryID") %>%
+  gt() %>% 
   tab_header(
     title = "Elasticidad de demanda de 2011 a 2013",
     subtitle = "En base a la demanda mensual de cada subcategoría, reventa"
-  ) %>%
-  tab_spanner(
-    label = "Nombre Subcategoría",
-    columns = c("Español","Inglés")
   ) %>%
   tab_spanner(
     label = html("E<sub>d</sub>"),
@@ -171,7 +160,7 @@ ElasticityTable(Subcategory,[Year],Elasticity) AS (
 	SELECT Subcategory,[Year],(N*sumxy-sumx*sumy)/NULLIF(N*sumxx-sumx*sumx,0)
 	FROM SumOrderQtyTable
 ),
-PivotedElasticityTable(Subcategory,Elasticity_2010,Elasticity_2011,Elasticity_2012,Elasticity_2013,Elasticity_2014) AS (
+PivotedElasticityTable(Subcategory,[2010],[2011],[2012],[2013],[2014]) AS (
 	SELECT Subcategory,[2010],[2011],[2012],[2013],[2014]
 	FROM ElasticityTable AS SourceTable
 	PIVOT
@@ -180,9 +169,8 @@ PivotedElasticityTable(Subcategory,Elasticity_2010,Elasticity_2011,Elasticity_20
 		FOR [Year] IN ([2010],[2011],[2012],[2013],[2014])
 	) AS PivotTable
 )
-SELECT pet.Subcategory AS SubcategoryID,
-dps.SpanishProductSubcategoryName AS [Español], dps.EnglishProductSubcategoryName AS [Inglés],  
-pet.Elasticity_2011 AS [2011], pet.Elasticity_2012 AS [2012], pet.Elasticity_2013 AS [2013]
+SELECT dps.SpanishProductSubcategoryName AS [Subcategoría],ROUND(pet.[2011],2) AS [2011], ROUND(pet.[2012],2) AS [2012], 
+ROUND(pet.[2013],2) AS [2013]
 FROM PivotedElasticityTable pet, AdventureWorksDW2019.dbo.DimProductSubcategory dps 
 WHERE pet.Subcategory = dps.ProductSubcategoryKey 
 ORDER BY Subcategory"
@@ -190,15 +178,10 @@ ORDER BY Subcategory"
 df_total <- dbGetQuery(on,querytotal) 
 
 table_total <- df_total %>% 
-  gt(rowname_col = "Subcategory") %>%  
-  tab_stubhead(label = "ProductSubcategoryID") %>%
+  gt() %>% 
   tab_header(
     title = "Elasticidad de demanda de 2011 a 2013",
     subtitle = "En base a la demanda mensual de cada subcategoría, ambos canales"
-  ) %>%
-  tab_spanner(
-    label = "Nombre Subcategoría",
-    columns = c("Español","Inglés")
   ) %>%
   tab_spanner(
     label = html("E<sub>d</sub>"),
